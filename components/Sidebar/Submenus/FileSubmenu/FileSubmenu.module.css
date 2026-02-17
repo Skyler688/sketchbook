@@ -1,0 +1,53 @@
+.submenu {
+  width: 240px;
+  background-color: #313131;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.searchBar {
+  padding: 12px;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.searchBar input {
+  width: 95%;
+  padding: 8px;
+  border-radius: 6px;
+  border: none;
+  background-color: #2a2a2a;
+  color: #fff;
+}
+
+.searchBar input::placeholder {
+  color: #999;
+}
+
+.fileList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fileItem {
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  color: #cfcfcf;
+}
+
+.fileItem:hover {
+  background-color: #333;
+  color: #fff;
+}
+
+.emptyMessage {
+  color: #666;
+  text-align: center;
+  margin-top: 16px;
+}

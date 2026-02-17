@@ -1,0 +1,53 @@
+.sideMenu {
+  display: flex;
+}
+
+.sidebar {
+  width: 60px; /* collapsed width */
+  background-color: #1c1c1c;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  /* padding-top: 16px; */
+}
+
+.buttonGroup {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  /* gap: 8px; */
+  margin-top: 16px;
+}
+
+.toolButton {
+  background: none;
+  border: none;
+  color: #cfcfcf;
+  padding-inline: 12px;
+  padding-block: 14px;
+  /* display: flex;
+  justify-content: center; */
+  /* align-items: center; */
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.settings {
+  display: flex;
+  flex-direction: column;
+  margin-top: auto;
+}
+
+.toolButton:hover {
+  background-color: #272727;
+  /* color: #fff; */
+  cursor: pointer;
+}
+
+.toolButton:disabled {
+  background-color: #454545;
+  cursor: default;
+  color: #ffffff;
+}

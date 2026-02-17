@@ -28,7 +28,14 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
-    "**/*.mts"
+    "**/*.mts",
+    "lib/bcrypt.js",
+    "app/api/auth/register/route.js",
+    "app/page.jsx",
+    "app/layout.tsx",
+    "components/Header/Header.jsx",
+    "app/pages/login/page.jsx",
+    "app/account/page.jsx"
   ],
   "exclude": ["node_modules"]
 }

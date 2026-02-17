@@ -1,0 +1,111 @@
+.loginPage {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #121212;
+  font-family: Arial, sans-serif;
+}
+
+.loginCard {
+  width: 100%;
+  max-width: 400px;
+  background-color: #1e1e1e;
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.7);
+  text-align: center;
+}
+
+.loginTitle {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+}
+
+.loginSubtitle {
+  font-size: 0.95rem;
+  color: #cccccc;
+  margin-bottom: 1.5rem;
+}
+
+.loginForm .formGroup {
+  margin-bottom: 1rem;
+  text-align: left;
+  margin-right: 1.5rem;
+}
+
+.loginWarning {
+  font-size: 0.95rem;
+  color: #dd3f3f;
+  margin-bottom: 1.5rem;
+}
+
+.loginHint {
+  font-size: 0.95rem;
+  color: #ddbb3f;
+  margin-bottom: 1.5rem;
+}
+
+.loginForm label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+  color: #dddddd;
+}
+
+.loginForm input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #444444;
+  border-radius: 0.5rem;
+  background-color: #2c2c2c;
+  color: #ffffff;
+  outline: none;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.loginForm input::placeholder {
+  color: #888888;
+}
+
+.loginForm input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4);
+}
+
+.loginButton {
+  width: 100%;
+  padding: 0.6rem 0;
+  margin-top: 0.5rem;
+  background-color: #3b82f6;
+  color: #ffffff;
+  font-weight: bold;
+  border: none;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s;
+}
+
+.loginButton:hover {
+  background-color: #2563eb;
+  cursor: pointer;
+}
+
+.loginButton:disabled {
+  background-color: #2c2c2c;
+  cursor: not-allowed;
+}
+
+.loginFooter {
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  color: #aaaaaa;
+}
+
+.loginFooter a {
+  color: #3b82f6;
+  text-decoration: underline;
+}
