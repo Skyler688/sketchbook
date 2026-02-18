@@ -1,0 +1,20 @@
+.app {
+  width: 100vw;
+  height: 100vh;
+  background-color: #212121;
+  z-index: -1;
+}
+
+.workArea {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1;
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 2;
+}

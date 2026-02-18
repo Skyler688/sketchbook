@@ -1,18 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import styles from "./FileSubmenu.module.css";
+import styles from "./FileSubMenu.module.css";
 
-export default function FileSubmenu({ files = [] }) {
+export default function FileSubmenu({ width }) {
   const [searchTerm, setSearchTerm] = useState("");
 
   // Filter files by search term
-  const filteredFiles = files.filter((file) =>
-    file.name.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  //   const filteredFiles = files.filter((file) =>
+  //     file.name.toLowerCase().includes(searchTerm.toLowerCase()),
+  //   );
 
   return (
-    <div className={styles.submenu}>
+    <div className={styles.submenu} style={{ width: `${width}px` }}>
       <div className={styles.searchBar}>
         <input
           type="text"
@@ -22,7 +22,7 @@ export default function FileSubmenu({ files = [] }) {
         />
       </div>
 
-      <div className={styles.fileList}>
+      {/* <div className={styles.fileList}>
         {filteredFiles.length > 0 ? (
           filteredFiles.map((file) => (
             <div key={file.id} className={styles.fileItem}>
@@ -32,7 +32,7 @@ export default function FileSubmenu({ files = [] }) {
         ) : (
           <div className={styles.emptyMessage}>No files found</div>
         )}
-      </div>
+      </div> */}
     </div>
   );
 }

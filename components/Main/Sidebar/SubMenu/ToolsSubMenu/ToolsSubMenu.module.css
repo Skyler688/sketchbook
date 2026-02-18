@@ -1,7 +1,7 @@
 .submenu {
-  width: 240px;
   background-color: #313131;
   height: 100vh;
   display: flex;
   flex-direction: column;
+  align-items: center;
 }

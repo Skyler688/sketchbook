@@ -1,5 +1,4 @@
-import Sidebar from "../components/Sidebar/Sidebar";
-import Canvas from "../components/Canvas/Canvas";
+import Main from "../components/Main/Main";
 
 import jwt from "jsonwebtoken";
 import { redirect } from "next/navigation";
@@ -17,14 +16,10 @@ export default async function Home() {
   let payload;
   try {
     payload = jwt.verify(token, process.env.JWT_SECRET);
+    console.log("Token valid->", payload);
   } catch {
     redirect("/pages/login");
   }
 
-  return (
-    <div className="app">
-      <Sidebar />
-      <Canvas />
-    </div>
-  );
+  return <Main />;
 }

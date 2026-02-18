@@ -1,5 +1,5 @@
 .submenu {
-  width: 240px;
+  /* width: 245px; */
   background-color: #313131;
   height: 100vh;
   display: flex;
@@ -9,10 +9,12 @@
 .searchBar {
   padding: 12px;
   border-bottom: 1px solid #2a2a2a;
+  display: flex;
+  justify-content: center;
 }
 
 .searchBar input {
-  width: 95%;
+  width: 85%;
   padding: 8px;
   border-radius: 6px;
   border: none;

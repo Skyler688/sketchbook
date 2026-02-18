@@ -7,6 +7,7 @@ export const config = {
 };
 
 export function middleware(req) {
+  console.log("middleware is running");
   const token = validateCookie(req.cookies);
 
   if (!token) {

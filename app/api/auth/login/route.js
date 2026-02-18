@@ -53,13 +53,16 @@ export async function POST(req) {
       );
     }
 
-    const user = await database.listRows({
+    // Data base validation
+    const users = await database.listRows({
       databaseId: database_id,
       tableId: "users",
       queries: [Query.equal("username", username)],
     });
 
-    if (user.total !== 1) {
+    if (users.total > 1) {
+      throw new Error("Multiple user copies found in database");
+    } else if (users.total !== 1) {
       return new Response(
         JSON.stringify({
           success: false,
@@ -67,13 +70,13 @@ export async function POST(req) {
         }),
         { status: 400 },
       );
-    } else if (user.total > 1) {
-      throw new Error("Multiple user copies found in database");
     }
 
-    console.log("TEST->", user);
+    console.log("TEST->", users);
 
-    const is_valid = await verifyPassword(password, user.rows[0].password);
+    const user = users.rows[0];
+
+    const is_valid = await verifyPassword(password, user.password);
 
     if (!is_valid) {
       return new Response(
@@ -85,6 +88,7 @@ export async function POST(req) {
       );
     }
 
+    // If user is valid, creating sessionCookie and JWT token.
     const token = createSessionToken(user.$id, username);
     const cookie = setSessionCookie(token);
 
