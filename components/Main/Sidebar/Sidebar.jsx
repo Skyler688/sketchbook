@@ -3,7 +3,7 @@
 import FileSubmenu from "./SubMenu/FileSubMenu/FileSubMenu";
 import ToolsSubmenu from "./SubMenu/ToolsSubMenu/ToolsSubMenu";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import styles from "./Sidebar.module.css";
 import { FiFile, FiUpload, FiSettings } from "react-icons/fi";
 import { SlWrench } from "react-icons/sl";
@@ -18,13 +18,29 @@ export default function Sidebar() {
     max: 600 + sideBarWidth,
   };
 
-  const [subMenu, setSubMenu] = useState("files");
+  const [subMenu, setSubMenu] = useState("");
   const [submenuWidth, setSubmenuWidth] = useState(
     sideBarWidth + subMenuWidth - selectorWindow / 2,
   );
-  const [subMenuVisible, setSubMenuVisible] = useState(true);
-
+  const [subMenuVisible, setSubMenuVisible] = useState(false);
   const widthSelector = useRef(null);
+
+  // Macros
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      console.log("Key press->", event.key);
+
+      if (event.key === "Escape") {
+        setSubMenuVisible(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   function onPointerDown(e) {
     const selector = widthSelector.current;
@@ -56,21 +72,6 @@ export default function Sidebar() {
       <aside className={styles.sidebar} style={{ width: `${sideBarWidth}px` }}>
         <div className={styles.buttonGroup}>
           <button
-            className={`${styles.toolButton} ${subMenuVisible && subMenu === "files" ? styles.active : ""}`}
-            type="button"
-            onClick={() => {
-              if (subMenu === "files") {
-                setSubMenuVisible((prev) => !prev);
-              } else {
-                setSubMenu("files");
-                setSubMenuVisible(true);
-              }
-            }}
-          >
-            <FiFile size={20} />
-          </button>
-
-          <button
             className={`${styles.toolButton} ${subMenuVisible && subMenu === "tools" ? styles.active : ""}`}
             type="button"
             onClick={() => {
@@ -85,15 +86,22 @@ export default function Sidebar() {
             <SlWrench size={20} />
           </button>
 
-          <div className={styles.settings}>
-            <button
-              className={styles.toolButton}
-              type="button"
-              //   onClick={() => setSubmenu("save")}
-            >
-              <FaRegUserCircle size={20} />
-            </button>
+          <button
+            className={`${styles.toolButton} ${subMenuVisible && subMenu === "files" ? styles.active : ""}`}
+            type="button"
+            onClick={() => {
+              if (subMenu === "files") {
+                setSubMenuVisible((prev) => !prev);
+              } else {
+                setSubMenu("files");
+                setSubMenuVisible(true);
+              }
+            }}
+          >
+            <FiFile size={20} />
+          </button>
 
+          <div className={styles.settings}>
             <button
               className={styles.toolButton}
               type="button"
@@ -101,18 +109,25 @@ export default function Sidebar() {
             >
               <FiSettings size={20} />
             </button>
+            <button
+              className={styles.toolButton}
+              type="button"
+              //   onClick={() => setSubmenu("save")}
+            >
+              <FaRegUserCircle size={20} />
+            </button>
           </div>
         </div>
       </aside>
 
       <div style={{ display: subMenuVisible ? "block" : "none" }}>
-        {subMenu === "files" && (
-          <FileSubmenu
+        {subMenu === "tools" && (
+          <ToolsSubmenu
             width={submenuWidth - sideBarWidth + selectorWindow / 2}
           />
         )}
-        {subMenu === "tools" && (
-          <ToolsSubmenu
+        {subMenu === "files" && (
+          <FileSubmenu
             width={submenuWidth - sideBarWidth + selectorWindow / 2}
           />
         )}
