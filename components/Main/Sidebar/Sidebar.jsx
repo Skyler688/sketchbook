@@ -9,7 +9,7 @@ import { FiFile, FiUpload, FiSettings } from "react-icons/fi";
 import { SlWrench } from "react-icons/sl";
 import { FaRegUserCircle } from "react-icons/fa";
 
-export default function Sidebar() {
+export default function Sidebar({ lineSettingsBridge }) {
   const sideBarWidth = 60;
   const selectorWindow = 15;
   const subMenuWidth = 260;
@@ -120,17 +120,17 @@ export default function Sidebar() {
         </div>
       </aside>
 
-      <div style={{ display: subMenuVisible ? "block" : "none" }}>
+      <div
+        style={{
+          display: subMenuVisible ? "block" : "none",
+          width: `${submenuWidth - sideBarWidth + selectorWindow / 2}px`,
+        }}
+        className={styles.subMenu}
+      >
         {subMenu === "tools" && (
-          <ToolsSubmenu
-            width={submenuWidth - sideBarWidth + selectorWindow / 2}
-          />
+          <ToolsSubmenu lineSettingsBridge={lineSettingsBridge} />
         )}
-        {subMenu === "files" && (
-          <FileSubmenu
-            width={submenuWidth - sideBarWidth + selectorWindow / 2}
-          />
-        )}
+        {subMenu === "files" && <FileSubmenu />}
 
         <button
           ref={widthSelector}

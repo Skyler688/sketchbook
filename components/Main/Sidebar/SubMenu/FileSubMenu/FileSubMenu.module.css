@@ -1,10 +1,10 @@
-.submenu {
-  /* width: 245px; */
+/* .submenu {
+  width: 100%;
   background-color: #313131;
   height: 100vh;
   display: flex;
   flex-direction: column;
-}
+} */
 
 .searchBar {
   padding: 12px;

@@ -9,7 +9,11 @@ import styles from "./Canvas.module.css";
 
 import { useRef, useEffect } from "react";
 
-export default function Canvas({ drawingData, lineSettings }) {
+export default function Canvas({ drawingBridge, lineSettingsBridge }) {
+  // The custom bridge to link data and events across components.
+  const drawing_bridge = drawingBridge.current;
+  const line_settings_bridge = lineSettingsBridge.current;
+
   const canvasRef = useRef(null);
   const drawing = useRef(false);
   const lastPoint = useRef({ x: 0, y: 0 });
@@ -32,12 +36,10 @@ export default function Canvas({ drawingData, lineSettings }) {
   // This is what applies the move/zoom feature.
   const camera = useRef({
     origin: { x: 0, y: 0 },
-    scale: 1,
+    scale: 1.0,
   });
 
-  // The custom state sharing/event stores, see the Main component for more info.
-  const line_settings_store = lineSettings.current;
-  const drawing_data_store = drawingData.current;
+  const amount_of_lines = useRef(0);
 
   // If the screen size is changed this will modify the canvas size while retaining the resolution.
   // DEV NOTE -> Be sure to apply a debounce timer to the redraw of the canvas if performance is poor.
@@ -75,59 +77,74 @@ export default function Canvas({ drawingData, lineSettings }) {
     }
 
     function redraw() {
+      console.log("Rendering drawing...");
       const ctx = canvas.getContext("2d");
-      drawing_data_store.get().lines.forEach((line) => {
+
+      const scale = camera.current.scale;
+
+      drawing_bridge.get().lines.forEach((line) => {
         const lineOrigin = {
-          x: centerOffset.current.x + line.origin.x,
-          y: centerOffset.current.y + line.origin.y,
+          x:
+            centerOffset.current.x +
+            camera.current.origin.x +
+            line.origin.x * scale,
+          y:
+            centerOffset.current.y +
+            camera.current.origin.y +
+            line.origin.y * scale,
         };
 
-        for (let i = 0; i < line.points.length; i++) {
+        for (let i = 0; i < line.points.length; i += 1) {
           // If first point render a circle.
           if (i === 0) {
             ctx.beginPath();
 
-            ctx.arc(lineOrigin.x, lineOrigin.y, line.width / 4, 0, 2 * Math.PI);
-            ctx.lineWidth = line.width / 2;
+            ctx.arc(
+              lineOrigin.x,
+              lineOrigin.y,
+              (line.width / 4) * scale,
+              0,
+              2 * Math.PI,
+            );
+            ctx.lineWidth = (line.width / 2) * scale;
             ctx.strokeStyle = line.color;
             ctx.stroke();
 
             ctx.beginPath();
             ctx.lineTo(
-              lineOrigin.x + line.points[i].x,
-              lineOrigin.y + line.points[i].y,
+              lineOrigin.x + line.points[i].x * scale,
+              lineOrigin.y + line.points[i].y * scale,
             );
-            ctx.lineWidth = line.width;
+            ctx.lineWidth = line.width * scale;
             ctx.strokeStyle = line.color;
             ctx.stroke();
           } else if (i < line.points.length - 1) {
             ctx.lineTo(
-              lineOrigin.x + line.points[i].x,
-              lineOrigin.y + line.points[i].y,
+              lineOrigin.x + line.points[i].x * scale,
+              lineOrigin.y + line.points[i].y * scale,
             );
-            ctx.lineWidth = line.width;
+            ctx.lineWidth = line.width * scale;
             ctx.strokeStyle = line.color;
-            // ctx.stroke();
           } else {
             // last point
             ctx.lineTo(
-              lineOrigin.x + line.points[i].x,
-              lineOrigin.y + line.points[i].y,
+              lineOrigin.x + line.points[i].x * scale,
+              lineOrigin.y + line.points[i].y * scale,
             );
-            ctx.lineWidth = line.width;
+            ctx.lineWidth = line.width * scale;
             ctx.strokeStyle = line.color;
             ctx.stroke();
 
             ctx.beginPath();
 
             ctx.arc(
-              lineOrigin.x + line.points[i].x,
-              lineOrigin.y + line.points[i].y,
-              line.width / 4,
+              lineOrigin.x + line.points[i].x * scale,
+              lineOrigin.y + line.points[i].y * scale,
+              (line.width / 4) * scale,
               0,
               2 * Math.PI,
             );
-            ctx.lineWidth = line.width / 2;
+            ctx.lineWidth = (line.width / 2) * scale;
             ctx.strokeStyle = line.color;
             ctx.stroke();
           }
@@ -135,30 +152,68 @@ export default function Canvas({ drawingData, lineSettings }) {
       });
     }
 
-    function loadLocalData() {
-      const saved = localStorage.getItem("drawing_data");
-      if (!saved) return;
+    function loadLineSettings() {
+      console.log("Loading line settings...");
+      const line_settings = localStorage.getItem("line_settings");
+      if (!line_settings) {
+        console.log("No settings found, using default.");
+        return;
+      }
 
-      const parsed_data = JSON.parse(saved);
+      const settings = JSON.parse(line_settings);
 
-      drawing_data_store.mutate((data) => {
-        data.lines = parsed_data.lines || [];
-        data.redo_stack = parsed_data.redo_stack || [];
-        data.camera = parsed_data.camera || { x: 0, y: 0, scale: 1 };
+      line_settings_bridge.mutate((data) => {
+        data.width = settings.width;
+        data.color = settings.color;
       });
     }
 
-    loadLocalData();
+    loadLineSettings();
+
+    function loadLines() {
+      console.log("Loading drawing...");
+      const saved_lines = [];
+
+      let index = 0;
+      while (true) {
+        const saved = localStorage.getItem(`line_${index}`);
+        if (!saved) break;
+
+        saved_lines.push(JSON.parse(saved));
+        amount_of_lines.current++;
+        index++;
+      }
+
+      drawing_bridge.mutate((data) => {
+        data.lines = saved_lines || [];
+        // data.camera = parsed_data.camera || { x: 0, y: 0, scale: 1 }; // CHANGE ONCE YOU HAVE THE CAMERA SET UP.
+      });
+    }
+
+    loadLines();
 
     resizeCanvas();
 
-    // Events
+    // ---------------------- Events ----------------------
     window.addEventListener("resize", handleResize);
 
     // CHANGE THIS -> save each line to its own local storage to avoid lag with larger drawings.
-    const unsubscribe = drawing_data_store.subscribe((data) => {
-      console.log("Store changed");
-      localStorage.setItem("drawing_data", JSON.stringify(data));
+    const unsubscribe = drawing_bridge.subscribe((data) => {
+      console.log("Saving new line...");
+
+      if (amount_of_lines.current < data.lines.length) {
+        const lines_to_save = data.lines.length - amount_of_lines.current;
+
+        for (let i = 0; i < lines_to_save; i++) {
+          const line_index = i + data.lines.length - lines_to_save;
+          localStorage.setItem(
+            `line_${line_index}`,
+            JSON.stringify(data.lines[line_index]),
+          );
+        }
+
+        amount_of_lines.current = data.lines.length;
+      }
     });
 
     // Cleaning up the events, (preventing multiple copies every time the component is rerendered)
@@ -184,13 +239,13 @@ export default function Canvas({ drawingData, lineSettings }) {
       y: e.nativeEvent.offsetY,
     };
 
-    const line_width = line_settings_store.get().width;
+    const line_width = line_settings_bridge.get().width;
 
     console.log(line.current); //////////////////////////
 
     ctx.arc(point.x, point.y, line_width / 4, 0, 2 * Math.PI);
     ctx.lineWidth = line_width / 2;
-    ctx.strokeStyle = line_settings_store.get().color;
+    ctx.strokeStyle = line_settings_bridge.get().color;
     ctx.stroke();
 
     ctx.beginPath();
@@ -224,8 +279,8 @@ export default function Canvas({ drawingData, lineSettings }) {
     if (distance(lastPoint.current, point) > 5) {
       lastPoint.current = point;
       ctx.lineTo(point.x, point.y);
-      ctx.lineWidth = line_settings_store.get().width;
-      ctx.strokeStyle = line_settings_store.get().color;
+      ctx.lineWidth = line_settings_bridge.get().width;
+      ctx.strokeStyle = line_settings_bridge.get().color;
       ctx.stroke();
 
       // Each line's points are created relative the origin of the line.
@@ -245,8 +300,8 @@ export default function Canvas({ drawingData, lineSettings }) {
     const line_length = line.current.points.length;
     if (line_length === 0) return;
 
-    const line_width = line_settings_store.get().width;
-    const line_color = line_settings_store.get().color;
+    const line_width = line_settings_bridge.get().width;
+    const line_color = line_settings_bridge.get().color;
 
     const line_obj = {
       points: [...line.current.points],
@@ -274,11 +329,11 @@ export default function Canvas({ drawingData, lineSettings }) {
     }
 
     // This is how i update the shared stores allowing the other components to see the change, see the Main component for more info.
-    drawing_data_store.mutate((data) => {
+    drawing_bridge.mutate((data) => {
       data.lines.push(line_obj);
     });
 
-    console.log(drawing_data_store.get());
+    console.log(drawing_bridge.get());
 
     line.current.points = [];
   };

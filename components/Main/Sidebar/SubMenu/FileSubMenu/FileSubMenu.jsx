@@ -3,7 +3,7 @@
 import { useState } from "react";
 import styles from "./FileSubMenu.module.css";
 
-export default function FileSubmenu({ width }) {
+export default function FileSubmenu() {
   const [searchTerm, setSearchTerm] = useState("");
 
   // Filter files by search term
@@ -12,7 +12,7 @@ export default function FileSubmenu({ width }) {
   //   );
 
   return (
-    <div className={styles.submenu} style={{ width: `${width}px` }}>
+    <div className={styles.submenu}>
       <div className={styles.searchBar}>
         <input
           type="text"

@@ -14,3 +14,7 @@
 - Add a clear drawing feature.
 - If time look into line selection, allowing for deleting, moving, and editing any line.
 - Add cmd + z, and cmd + [shift] + z, undo and redo.
+
+## NOTE
+
+I got the camera figured out and is only set up in the render used in the loading of the drawing, i have not set it up on the drawing events yet.

@@ -11,27 +11,30 @@ import Canvas from "./Canvas/Canvas";
 
 import { useRef } from "react";
 
-// The function bellow is a work around to be able to have shared event driven state, across child elements
+// The function bellow is a "work around" to be able to have shared event driven state, across child elements
 // without triggering any rerenders. This is a performance requirment because of the canvas element.
-// Any rerenders would require that i redraw the drawing every time witch is expensive as it needs to draw every line one point at a time.
+// component rerenders would require that i redraw everything every time, witch could get expensive.
 // With this if i change the line width, color or any other shared state no rerender of the canvas will happen.
 
-// NOTE -> I used AI to help come up with this, i had it help me explore possible solutions, and landed on this.
-// It is almost a useRef class that can be passed around to components and trigger events in others, without causing any component rerenders.
-function createStore(initialValue) {
+// NOTE -> I used AI to help come up with this, i had it help me explore possible solutions, and after some time landed on this.
+// It is almost like a useRef class that retains its local state, providing methods to get, modify, and notify. (get, mutate, subscribe)
+function createBridge(initialValue) {
   let data = initialValue;
   const listeners = new Set();
 
   return {
+    // Extracting data
     get() {
       return data;
     },
 
+    // Updating data
     mutate(mutator) {
       mutator(data);
       listeners.forEach((listener) => listener(data));
     },
 
+    // Event listener (MUST BE USED INSIDE "useState")
     subscribe(listener) {
       listeners.add(listener);
       return () => listeners.delete(listener);
@@ -40,16 +43,16 @@ function createStore(initialValue) {
 }
 
 export default function Main() {
-  const drawingData = useRef(
-    createStore({
+  const drawingBridge = useRef(
+    createBridge({
       lines: [],
       redo_stack: [],
       camera: { x: 0, y: 0, scale: 1 },
     }),
   );
 
-  const lineSettings = useRef(
-    createStore({
+  const lineSettingsBridge = useRef(
+    createBridge({
       width: 10,
       color: "#ffffff",
     }),
@@ -58,10 +61,13 @@ export default function Main() {
   return (
     <div className={styles.app}>
       <div className={styles.workArea}>
-        <Canvas drawingData={drawingData} lineSettings={lineSettings} />
+        <Canvas
+          drawingBridge={drawingBridge}
+          lineSettingsBridge={lineSettingsBridge}
+        />
       </div>
       <div className={styles.sidebar}>
-        <Sidebar />
+        <Sidebar lineSettingsBridge={lineSettingsBridge} />
       </div>
     </div>
   );
