@@ -26,21 +26,21 @@ export default function Sidebar({ lineSettingsBridge }) {
   const widthSelector = useRef(null);
 
   // Macros
-  useEffect(() => {
-    const handleKeyDown = (event) => {
-      console.log("Key press->", event.key);
+  //   useEffect(() => {
+  //     const handleKeyDown = (event) => {
+  //       console.log("Key press->", event.key);
 
-      if (event.key === "Escape") {
-        setSubMenuVisible(false);
-      }
-    };
+  //       if (event.key === "Escape") {
+  //         setSubMenuVisible(false);
+  //       }
+  //     };
 
-    window.addEventListener("keydown", handleKeyDown);
+  //     window.addEventListener("keydown", handleKeyDown);
 
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, []);
+  //     return () => {
+  //       window.removeEventListener("keydown", handleKeyDown);
+  //     };
+  //   }, []);
 
   function onPointerDown(e) {
     const selector = widthSelector.current;

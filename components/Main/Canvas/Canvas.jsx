@@ -9,10 +9,15 @@ import styles from "./Canvas.module.css";
 
 import { useRef, useEffect } from "react";
 
-export default function Canvas({ drawingBridge, lineSettingsBridge }) {
-  // The custom bridge to link data and events across components.
+export default function Canvas({
+  drawingBridge,
+  lineSettingsBridge,
+  cameraBridge,
+}) {
+  // The custom bridge to link data and events across components, without triggering a rerender.
   const drawing_bridge = drawingBridge.current;
   const line_settings_bridge = lineSettingsBridge.current;
+  const camera_bridge = cameraBridge.current;
 
   const canvasRef = useRef(null);
   const drawing = useRef(false);
@@ -32,14 +37,18 @@ export default function Canvas({ drawingBridge, lineSettingsBridge }) {
     points: [],
   });
 
-  // NOTE -> This is a global effect applied to all lines in the drawing.
-  // This is what applies the move/zoom feature.
-  const camera = useRef({
-    origin: { x: 0, y: 0 },
-    scale: 1.0,
-  });
+  const amountOfLines = useRef(0);
 
-  const amount_of_lines = useRef(0);
+  const moveMode = useRef(false);
+  const lastMovePos = useRef({ x: 0, y: 0, is_captured: false });
+
+  const leftClickDown = useRef(false);
+
+  function distance(last_point, current_point) {
+    const dx = last_point.x - current_point.x;
+    const dy = last_point.y - current_point.y;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
 
   // If the screen size is changed this will modify the canvas size while retaining the resolution.
   // DEV NOTE -> Be sure to apply a debounce timer to the redraw of the canvas if performance is poor.
@@ -63,7 +72,6 @@ export default function Canvas({ drawingBridge, lineSettingsBridge }) {
       centerOffset.current.y = window.innerHeight / 2;
 
       ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.scale(dpr, dpr); // optional: handle high-DPI
 
       redraw();
@@ -77,20 +85,22 @@ export default function Canvas({ drawingBridge, lineSettingsBridge }) {
     }
 
     function redraw() {
-      console.log("Rendering drawing...");
+      //   console.log("Rendering drawing...");
       const ctx = canvas.getContext("2d");
 
-      const scale = camera.current.scale;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const scale = camera_bridge.get().scale;
 
       drawing_bridge.get().lines.forEach((line) => {
         const lineOrigin = {
           x:
             centerOffset.current.x +
-            camera.current.origin.x +
+            camera_bridge.get().x +
             line.origin.x * scale,
           y:
             centerOffset.current.y +
-            camera.current.origin.y +
+            camera_bridge.get().y +
             line.origin.y * scale,
         };
 
@@ -99,6 +109,7 @@ export default function Canvas({ drawingBridge, lineSettingsBridge }) {
           if (i === 0) {
             ctx.beginPath();
 
+            ctx.moveTo(lineOrigin.x, lineOrigin.y);
             ctx.arc(
               lineOrigin.x,
               lineOrigin.y,
@@ -111,6 +122,7 @@ export default function Canvas({ drawingBridge, lineSettingsBridge }) {
             ctx.stroke();
 
             ctx.beginPath();
+
             ctx.lineTo(
               lineOrigin.x + line.points[i].x * scale,
               lineOrigin.y + line.points[i].y * scale,
@@ -180,7 +192,7 @@ export default function Canvas({ drawingBridge, lineSettingsBridge }) {
         if (!saved) break;
 
         saved_lines.push(JSON.parse(saved));
-        amount_of_lines.current++;
+        amountOfLines.current++;
         index++;
       }
 
@@ -197,12 +209,12 @@ export default function Canvas({ drawingBridge, lineSettingsBridge }) {
     // ---------------------- Events ----------------------
     window.addEventListener("resize", handleResize);
 
-    // CHANGE THIS -> save each line to its own local storage to avoid lag with larger drawings.
-    const unsubscribe = drawing_bridge.subscribe((data) => {
+    // Save each new line to local storage as soon as it is created.
+    const save_line_sub = drawing_bridge.subscribe((data) => {
       console.log("Saving new line...");
 
-      if (amount_of_lines.current < data.lines.length) {
-        const lines_to_save = data.lines.length - amount_of_lines.current;
+      if (amountOfLines.current < data.lines.length) {
+        const lines_to_save = data.lines.length - amountOfLines.current;
 
         for (let i = 0; i < lines_to_save; i++) {
           const line_index = i + data.lines.length - lines_to_save;
@@ -212,21 +224,54 @@ export default function Canvas({ drawingBridge, lineSettingsBridge }) {
           );
         }
 
-        amount_of_lines.current = data.lines.length;
+        amountOfLines.current = data.lines.length;
+      }
+    });
+
+    const last_camera_pos = {
+      x: 0,
+      y: 0,
+    };
+    // Note -> This is tied to the shift key being held down, see the Main component for the key event handling.
+    const move_mode_sub = camera_bridge.subscribe((data) => {
+      if (data.active) {
+        moveMode.current = true;
+
+        // console.log("Move mode active");
+      } else {
+        // lastMovePos.current.is_captured = false;
+        moveMode.current = false;
+
+        // console.log("Move mode disabled");
+      }
+
+      const current_pos = {
+        x: data.x,
+        y: data.y,
+      };
+
+      // Only redrawing the canvas if moved over 20px to avoid lag, if moving te mouse fast there is still a bit of lag but may be unavoidable with cpu rendering.
+      if (distance(last_camera_pos, current_pos) > 20) {
+        redraw();
+
+        last_camera_pos.x = current_pos.x;
+        last_camera_pos.y = current_pos.y;
       }
     });
 
     // Cleaning up the events, (preventing multiple copies every time the component is rerendered)
     return () => {
       window.removeEventListener("resize", handleResize);
-      unsubscribe();
+      save_line_sub(); // Deleting the bridge event listener subscription.
+      move_mode_sub();
     };
   }, []);
 
-  const startDrawing = (e) => {
-    if (e.button !== 0) {
+  const startDrawing = (event) => {
+    if (event.button !== 0) {
       console.log("stop");
-      stopDrawing(e);
+      stopDrawing();
+
       return;
     }
 
@@ -235,13 +280,13 @@ export default function Canvas({ drawingBridge, lineSettingsBridge }) {
     ctx.beginPath();
 
     const point = {
-      x: e.nativeEvent.offsetX,
-      y: e.nativeEvent.offsetY,
+      x: event.nativeEvent.offsetX,
+      y: event.nativeEvent.offsetY,
     };
 
     const line_width = line_settings_bridge.get().width;
 
-    console.log(line.current); //////////////////////////
+    // console.log(line.current); //////////////////////////
 
     ctx.arc(point.x, point.y, line_width / 4, 0, 2 * Math.PI);
     ctx.lineWidth = line_width / 2;
@@ -252,27 +297,24 @@ export default function Canvas({ drawingBridge, lineSettingsBridge }) {
 
     lastPoint.current = point;
 
-    line.current.origin.x = point.x - centerOffset.current.x;
-    line.current.origin.y = point.y - centerOffset.current.y;
+    line.current.origin.x =
+      point.x - centerOffset.current.x - camera_bridge.get().x;
+    line.current.origin.y =
+      point.y - centerOffset.current.y - camera_bridge.get().y;
 
     line.current.points.push({ x: 0, y: 0 });
 
     ctx.moveTo(point.x, point.y);
   };
 
-  const draw = (e) => {
+  const draw = (event) => {
     if (!drawing.current) return;
+
     const ctx = canvasRef.current.getContext("2d");
 
-    function distance(last_point, current_point) {
-      const dx = last_point.x - current_point.x;
-      const dy = last_point.y - current_point.y;
-      return Math.sqrt(dx * dx + dy * dy);
-    }
-
     const point = {
-      x: e.nativeEvent.offsetX,
-      y: e.nativeEvent.offsetY,
+      x: event.nativeEvent.offsetX,
+      y: event.nativeEvent.offsetY,
     };
 
     // Filtering the min move distance needed to create a new point in the line.
@@ -283,12 +325,14 @@ export default function Canvas({ drawingBridge, lineSettingsBridge }) {
       ctx.strokeStyle = line_settings_bridge.get().color;
       ctx.stroke();
 
+      const camera = camera_bridge.get();
       // Each line's points are created relative the origin of the line.
-      // This makes it much easer to do things like move the lines around.
       const relative_point = {
-        x: point.x - centerOffset.current.x - line.current.origin.x,
-        y: point.y - centerOffset.current.y - line.current.origin.y,
+        x: point.x - centerOffset.current.x - camera.x - line.current.origin.x,
+        y: point.y - centerOffset.current.y - camera.y - line.current.origin.y,
       };
+
+      // BUG -> After the camera is moved off of x: 0, y: 0, the lines relativity to the origin gets messed up?
 
       line.current.points.push(relative_point);
     }
@@ -316,9 +360,17 @@ export default function Canvas({ drawingBridge, lineSettingsBridge }) {
       ctx.beginPath();
 
       const last_point = line.current.points[line_length - 1];
+      const camera = camera_bridge.get();
+
       ctx.arc(
-        last_point.x + (line.current.origin.x + centerOffset.current.x),
-        last_point.y + (line.current.origin.y + centerOffset.current.y),
+        last_point.x +
+          line.current.origin.x +
+          camera.x +
+          centerOffset.current.x,
+        last_point.y +
+          line.current.origin.y +
+          camera.y +
+          centerOffset.current.y,
         line_width / 4,
         0,
         2 * Math.PI,
@@ -342,10 +394,62 @@ export default function Canvas({ drawingBridge, lineSettingsBridge }) {
     <canvas
       ref={canvasRef}
       className={styles.canvas}
-      onMouseDown={startDrawing}
-      onMouseMove={draw}
-      onMouseUp={stopDrawing}
-      onMouseLeave={stopDrawing}
+      onMouseDown={(event) => {
+        if (!moveMode.current) {
+          startDrawing(event);
+        }
+
+        if (event.button === 0) {
+          leftClickDown.current = true;
+        }
+      }}
+      onMouseMove={(event) => {
+        if (!moveMode.current) {
+          draw(event);
+        } else if (leftClickDown.current) {
+          // If put in move mode while drawing a line.
+          if (drawing.current) {
+            stopDrawing();
+          }
+
+          const offset = {
+            x: event.nativeEvent.offsetX,
+            y: event.nativeEvent.offsetY,
+          };
+
+          // Mutate the cameras position.
+          if (lastMovePos.current.is_captured) {
+            camera_bridge.mutate((data) => {
+              data.x += offset.x - lastMovePos.current.x;
+              data.y += offset.y - lastMovePos.current.y;
+
+              lastMovePos.current.x = offset.x;
+              lastMovePos.current.y = offset.y;
+            });
+          } else {
+            lastMovePos.current.x = offset.x;
+            lastMovePos.current.y = offset.y;
+
+            lastMovePos.current.is_captured = true;
+          }
+        }
+      }}
+      onMouseUp={(event) => {
+        if (!moveMode.current) {
+          stopDrawing();
+        }
+        if (event.button === 0) {
+          leftClickDown.current = false;
+          lastMovePos.current.is_captured = false;
+        }
+      }}
+      onMouseLeave={(event) => {
+        stopDrawing();
+
+        // moveMode.current = false;
+        leftClickDown.current = false;
+        lastMovePos.current.is_captured = false;
+      }}
     />
   );
 }
