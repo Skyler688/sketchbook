@@ -44,6 +44,8 @@ export default function Canvas({
 
   const leftClickDown = useRef(false);
 
+  const mousePosition = useRef({ x: 0, y: 0 });
+
   function distance(last_point, current_point) {
     const dx = last_point.x - current_point.x;
     const dy = last_point.y - current_point.y;
@@ -91,10 +93,6 @@ export default function Canvas({
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       const camera = camera_bridge.get();
-      //   const offset = {
-      //     x: camera.scale + centerOffset.current.x,
-      //     y: camera.scale + centerOffset.current.y,
-      //   };
 
       function worldToCanvas(points) {
         return {
@@ -193,7 +191,6 @@ export default function Canvas({
 
       drawing_bridge.mutate((data) => {
         data.lines = saved_lines || [];
-        // data.camera = parsed_data.camera || { x: 0, y: 0, scale: 1 }; // CHANGE ONCE YOU HAVE THE CAMERA SET UP.
       });
     }
 
@@ -223,11 +220,8 @@ export default function Canvas({
       }
     });
 
-    const last_camera = {
-      x: 0,
-      y: 0,
-      scale: 1.0,
-    };
+    let last_scale = camera_bridge.get().scale;
+    let lastMousePos = mousePosition.current;
     // Note -> This is tied to the shift key being held down, see the Main component for the key event handling.
     const move_mode_sub = camera_bridge.subscribe((data) => {
       if (data.active) {
@@ -241,25 +235,17 @@ export default function Canvas({
         // console.log("Move mode disabled");
       }
 
-      const current_pos = {
-        x: data.x,
-        y: data.y,
-      };
-
-      const last_camera_pos = {
-        x: last_camera.x,
-        y: last_camera.y,
-      };
+      const currentPos = mousePosition.current;
 
       // Only redrawing the canvas if moved over 20px to avoid lag, if moving te mouse fast there is still a bit of lag but may be unavoidable with cpu rendering.
       if (
-        distance(last_camera_pos, current_pos) > 20 ||
-        last_camera.scale !== data.scale
+        distance(lastMousePos, currentPos) > 20 ||
+        last_scale !== data.scale
       ) {
         redraw();
 
-        last_camera.x = current_pos.x;
-        last_camera.y = current_pos.y;
+        lastMousePos = currentPos;
+        last_scale = data.scale;
       }
     });
 
@@ -412,6 +398,11 @@ export default function Canvas({
         }
       }}
       onMouseMove={(event) => {
+        mousePosition.current = {
+          x: event.nativeEvent.offsetX,
+          y: event.nativeEvent.offsetY,
+        };
+
         if (!moveMode.current) {
           draw(event);
         } else if (leftClickDown.current) {

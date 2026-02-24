@@ -15,6 +15,10 @@
 - Add cmd + z, and cmd + [shift] + z, undo and redo.
 - If time look into line selection, allowing for deleting, moving, and editing any line.
 
+## BUGS
+
+- (FIXED) There is a slight line jump that happens on the first rerender of the line. For whatever reason the drawn line dose not redraw perfectly.
+
 ## NOTE
 
 I got the camera figured out and is only set up in the render used in the loading of the drawing, i have not set it up on the drawing events yet.
