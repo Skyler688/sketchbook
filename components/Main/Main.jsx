@@ -81,6 +81,22 @@ export default function Main() {
           data.active = true;
         });
       }
+
+      if (key === "-") {
+        cameraBridge.current.mutate((data) => {
+          if (data.scale > 0.1) {
+            data.scale -= 0.1;
+          }
+        });
+      }
+
+      if (key === "=") {
+        cameraBridge.current.mutate((data) => {
+          if (data.scale < 2.0) {
+            data.scale += 0.1;
+          }
+        });
+      }
     };
 
     const handleKeyUp = (event) => {
