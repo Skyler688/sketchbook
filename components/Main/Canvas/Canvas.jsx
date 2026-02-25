@@ -198,6 +198,7 @@ export default function Canvas({
 
     resizeCanvas();
 
+    let delta = 0;
     function handleZoom(event) {
       if (!moveMode.current) return; // If shift is held.
 
@@ -206,15 +207,29 @@ export default function Canvas({
       camera_bridge.mutate((data) => {
         let scale = data.scale;
 
-        const delta =
+        const scroll_amount =
           Math.abs(event.deltaY) > Math.abs(event.deltaX)
             ? event.deltaY
             : event.deltaX;
 
-        if (delta > 0) {
+        // If the direction of the scroll is changed reset the delta.
+        if (
+          (scroll_amount > 0 && delta < 0) ||
+          (scroll_amount < 0 && delta > 0)
+        ) {
+          delta = 0;
+        }
+
+        delta += scroll_amount;
+
+        console.log(delta);
+
+        if (delta > 10) {
           scale *= 1.1;
-        } else if (delta < 0) {
+          delta = 0;
+        } else if (delta < -10) {
           scale *= 0.9;
+          delta = 0;
         }
 
         if (scale < 0.1) {
