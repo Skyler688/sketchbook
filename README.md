@@ -19,6 +19,6 @@
 
 - (FIXED) There is a slight line jump that happens on the first rerender of the line. For whatever reason the drawn line dose not redraw perfectly.
 
-## NOTE
+## NOTES
 
-I got the camera figured out and is only set up in the render used in the loading of the drawing, i have not set it up on the drawing events yet.
+- Should probably move all the current key events to the [Canvas] component so the key events are not global. It would be best to deligate key press events in the Main component

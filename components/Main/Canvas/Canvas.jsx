@@ -76,7 +76,7 @@ export default function Canvas({
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.scale(dpr, dpr); // optional: handle high-DPI
 
-      redraw();
+      render();
     }
 
     function handleResize() {
@@ -86,7 +86,7 @@ export default function Canvas({
       }, 100);
     }
 
-    function redraw() {
+    function render() {
       //   console.log("Rendering drawing...");
       const ctx = canvas.getContext("2d");
 
@@ -198,11 +198,40 @@ export default function Canvas({
 
     resizeCanvas();
 
+    function handleZoom(event) {
+      if (!moveMode.current) return; // If shift is held.
+
+      event.preventDefault(); // Disable normal page scrolling.
+
+      camera_bridge.mutate((data) => {
+        let scale = data.scale;
+
+        const delta =
+          Math.abs(event.deltaY) > Math.abs(event.deltaX)
+            ? event.deltaY
+            : event.deltaX;
+
+        if (delta > 0) {
+          scale *= 1.1;
+        } else if (delta < 0) {
+          scale *= 0.9;
+        }
+
+        if (scale < 0.1) {
+          scale = 0.1;
+        } else if (scale > 2.0) {
+          scale = 2.0;
+        }
+
+        data.scale = scale;
+      });
+    }
+
     // ---------------------- Events ----------------------
     window.addEventListener("resize", handleResize);
 
     // Save each new line to local storage as soon as it is created.
-    const save_line_sub = drawing_bridge.subscribe((data) => {
+    const save_line_sub = drawing_bridge.listen((data) => {
       console.log("Saving new line...");
 
       if (amountOfLines.current < data.lines.length) {
@@ -222,17 +251,13 @@ export default function Canvas({
 
     let last_scale = camera_bridge.get().scale;
     let lastMousePos = mousePosition.current;
-    // Note -> This is tied to the shift key being held down, see the Main component for the key event handling.
-    const move_mode_sub = camera_bridge.subscribe((data) => {
+    let initial_redraw = false;
+    // NOTE -> This event is tied to the shift key being held down, see the Main component for the key event handling.
+    const move_mode_sub = camera_bridge.listen((data) => {
       if (data.active) {
         moveMode.current = true;
-
-        // console.log("Move mode active");
       } else {
-        // lastMovePos.current.is_captured = false;
         moveMode.current = false;
-
-        // console.log("Move mode disabled");
       }
 
       const currentPos = mousePosition.current;
@@ -240,20 +265,25 @@ export default function Canvas({
       // Only redrawing the canvas if moved over 20px to avoid lag, if moving te mouse fast there is still a bit of lag but may be unavoidable with cpu rendering.
       if (
         distance(lastMousePos, currentPos) > 20 ||
-        last_scale !== data.scale
+        last_scale !== data.scale ||
+        !initial_redraw
       ) {
-        redraw();
+        render();
 
         lastMousePos = currentPos;
         last_scale = data.scale;
+        initial_redraw = true;
       }
     });
+
+    canvas.addEventListener("wheel", handleZoom, { passive: false });
 
     // Cleaning up the events, (preventing multiple copies every time the component is rerendered)
     return () => {
       window.removeEventListener("resize", handleResize);
       save_line_sub(); // Deleting the bridge event listener subscription.
       move_mode_sub();
+      canvas.removeEventListener("wheel", handleZoom);
     };
   }, []);
 

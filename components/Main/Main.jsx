@@ -9,6 +9,8 @@ import styles from "./Main.module.css";
 import Sidebar from "./Sidebar/Sidebar";
 import Canvas from "./Canvas/Canvas";
 
+import { createBridge } from "../../lib/data_bridge";
+
 import { useEffect, useRef } from "react";
 
 // The function bellow is a "work around" to be able to have shared event driven state, across child elements
@@ -18,29 +20,29 @@ import { useEffect, useRef } from "react";
 
 // NOTE -> I used AI to help come up with this, i had it help me explore possible solutions, and after some time landed on this.
 // It is almost like a useRef class that retains its local state, providing methods to get, modify, and notify. (get, mutate, subscribe)
-function createBridge(initialValue) {
-  let data = initialValue;
-  const listeners = new Set();
+// function createBridge(initialValue) {
+//   let data = initialValue;
+//   const listeners = new Set();
 
-  return {
-    // Extracting data
-    get() {
-      return data;
-    },
+//   return {
+//     // Extracting data
+//     get() {
+//       return data;
+//     },
 
-    // Updating data
-    mutate(mutator) {
-      mutator(data);
-      listeners.forEach((listener) => listener(data));
-    },
+//     // Updating data
+//     mutate(mutator) {
+//       mutator(data);
+//       listeners.forEach((listener) => listener(data));
+//     },
 
-    // Event listener (MUST BE USED INSIDE "useState")
-    subscribe(listener) {
-      listeners.add(listener);
-      return () => listeners.delete(listener); // Returning the delete, this is put in a variable then executed later like this-> variable_name();
-    },
-  };
-}
+//     // Event listener (MUST BE USED INSIDE "useState")
+//     subscribe(listener) {
+//       listeners.add(listener);
+//       return () => listeners.delete(listener); // Returning the delete, this is put in a variable then executed later like this-> variable_name();
+//     },
+//   };
+// }
 
 export default function Main() {
   // ------------------------------ Bridges ------------------------------
@@ -63,7 +65,7 @@ export default function Main() {
       x: 0,
       y: 0,
       scale: 1.0,
-      active: false, // This is to tell the canvas component when we are in move/zoom mode so it dose not try and draw anything.
+      active: false, // This is to tell the canvas component when we are in move/zoom mode so it dose not try and draw anything. When [shift] is held.
     }),
   );
 
@@ -84,8 +86,8 @@ export default function Main() {
 
       if (key === "-") {
         cameraBridge.current.mutate((data) => {
-          if (data.scale > 0.1) {
-            data.scale -= 0.1;
+          if (data.scale > 0.2) {
+            data.scale *= 0.9;
           }
         });
       }
@@ -93,7 +95,7 @@ export default function Main() {
       if (key === "=") {
         cameraBridge.current.mutate((data) => {
           if (data.scale < 2.0) {
-            data.scale += 0.1;
+            data.scale *= 1.1;
           }
         });
       }
@@ -129,6 +131,7 @@ export default function Main() {
       camera_bridge.mutate((data) => {
         data.x = parsed_camera.x;
         data.y = parsed_camera.y;
+        data.scale = parsed_camera.scale;
       });
     }
 
@@ -139,7 +142,7 @@ export default function Main() {
       y: 0,
     };
     // Change to only save once the camera is stable for a cirtain amount of time. this will avoid lag.
-    const camera_sub = cameraBridge.current.subscribe((data) => {
+    const camera_sub = cameraBridge.current.listen((data) => {
       clearTimeout(saveTimeout.current);
 
       if (last_camera_pos.x === data.x && last_camera_pos.y === data.y) {

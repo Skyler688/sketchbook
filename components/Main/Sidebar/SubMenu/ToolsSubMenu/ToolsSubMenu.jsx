@@ -13,7 +13,7 @@ export default function ToolsSubmenu({ lineSettingsBridge }) {
     let debounce_timer = null;
 
     // Events
-    const unsubscribe = line_settings_bridge.subscribe((data) => {
+    const unsubscribe = line_settings_bridge.listen((data) => {
       if (debounce_timer) {
         clearTimeout(debounce_timer);
       }

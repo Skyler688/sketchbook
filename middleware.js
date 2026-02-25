@@ -1,16 +1,21 @@
 import { NextResponse } from "next/server";
-import { validateCookie } from "../lib/session";
+import { validateToken } from "./lib/session";
 
 // Configuring the middleware to be used only on the private endpoints.
 export const config = {
   matcher: ["/api/private/:path*"],
 };
 
-export function middleware(req) {
+export async function middleware(req) {
   console.log("middleware is running");
-  const token = validateCookie(req.cookies);
 
-  if (!token) {
+  const token = req.cookies.get("session")?.value;
+  console.log(token);
+  const valid = await validateToken(token);
+
+  console.log(valid);
+
+  if (!valid) {
     return NextResponse.json(
       { success: false, message: "Unauthorized" },
       { status: 401 },

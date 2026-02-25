@@ -7,9 +7,14 @@ import { useState, useRef, useEffect } from "react";
 import styles from "./Sidebar.module.css";
 import { FiFile, FiUpload, FiSettings } from "react-icons/fi";
 import { SlWrench } from "react-icons/sl";
-import { FaRegUserCircle } from "react-icons/fa";
+// import { FaRegUserCircle } from "react-icons/fa";
+import { TbLogout2 } from "react-icons/tb";
+
+import { useRouter } from "next/navigation";
 
 export default function Sidebar({ lineSettingsBridge }) {
+  const router = useRouter();
+
   const sideBarWidth = 60;
   const selectorWindow = 15;
   const subMenuWidth = 260;
@@ -67,6 +72,20 @@ export default function Sidebar({ lineSettingsBridge }) {
     widthSelector.current?.releasePointerCapture(e.pointerId);
   }
 
+  async function logout() {
+    const res = await fetch("/api/auth/logout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    if (res.status !== 200) {
+      console.error("Error, failed to logout");
+      return;
+    }
+
+    router.push("/pages/login");
+  }
+
   return (
     <div className={styles.sideMenu}>
       <aside className={styles.sidebar} style={{ width: `${sideBarWidth}px` }}>
@@ -112,9 +131,9 @@ export default function Sidebar({ lineSettingsBridge }) {
             <button
               className={styles.toolButton}
               type="button"
-              //   onClick={() => setSubmenu("save")}
+              onClick={() => logout()}
             >
-              <FaRegUserCircle size={20} />
+              <TbLogout2 size={20} />
             </button>
           </div>
         </div>
