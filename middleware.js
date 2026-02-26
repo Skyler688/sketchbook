@@ -7,20 +7,24 @@ export const config = {
 };
 
 export async function middleware(req) {
-  console.log("middleware is running");
+  //   console.log("middleware is running");
 
-  const token = req.cookies.get("session")?.value;
-  console.log(token);
-  const valid = await validateToken(token);
+  const cookie = req.cookies.get("session")?.value;
+  const token = await validateToken(cookie);
 
-  console.log(valid);
-
-  if (!valid) {
+  if (!token) {
     return NextResponse.json(
       { success: false, message: "Unauthorized" },
       { status: 401 },
     );
   }
 
-  return NextResponse.next();
+  console.log(token);
+
+  const response = NextResponse.next();
+
+  response.headers.set("user_id", token.user_id);
+  response.headers.set("username", token.username);
+
+  return response;
 }

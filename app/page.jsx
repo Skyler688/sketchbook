@@ -1,23 +1,24 @@
 import Main from "../components/Main/Main";
 
-import jwt from "jsonwebtoken";
+// import jwt from "jsonwebtoken";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
+
+import { validateToken } from "../lib/session";
+import { verify } from "crypto";
 
 export default async function Home() {
   const cookie_store = await cookies();
 
-  const token = cookie_store.get("session")?.value;
+  const cookie = cookie_store.get("session")?.value;
 
-  if (!token) {
+  if (!cookie) {
     redirect("/pages/login");
   }
 
-  let payload;
-  try {
-    payload = jwt.verify(token, process.env.JWT_SECRET);
-    console.log("Token valid->", payload);
-  } catch {
+  const token = validateToken(cookie);
+
+  if (!token) {
     redirect("/pages/login");
   }
 

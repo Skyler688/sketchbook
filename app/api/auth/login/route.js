@@ -72,8 +72,6 @@ export async function POST(req) {
       );
     }
 
-    console.log("TEST->", users);
-
     const user = users.rows[0];
 
     const is_valid = await verifyPassword(password, user.password);

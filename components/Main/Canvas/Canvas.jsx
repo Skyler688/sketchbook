@@ -222,8 +222,6 @@ export default function Canvas({
 
         delta += scroll_amount;
 
-        console.log(delta);
-
         if (delta > 10) {
           scale *= 1.1;
           delta = 0;
