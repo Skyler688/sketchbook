@@ -8,10 +8,11 @@ import {
 
 export async function PUT(req) {
   try {
-    // Take the compressed file and send it to appwrite to update or create the file in the storage bucket.
-    const body = await req.json();
+    const drawing_data = req.formData();
 
-    console.log(body);
+    // Need to get and verify the drawing file.
+
+    // Save the file in the storage bucket and then create the users drawing info in the database.
 
     return new Response(JSON.stringify({ success: true }), { status: 200 });
   } catch (error) {

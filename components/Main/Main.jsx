@@ -140,20 +140,26 @@ export default function Main() {
     const last_camera_pos = {
       x: 0,
       y: 0,
+      scale: 0,
     };
     // Change to only save once the camera is stable for a cirtain amount of time. this will avoid lag.
     const camera_sub = cameraBridge.current.listen((data) => {
       clearTimeout(saveTimeout.current);
 
-      if (last_camera_pos.x === data.x && last_camera_pos.y === data.y) {
+      if (
+        last_camera_pos.x !== data.x ||
+        last_camera_pos.y !== data.y ||
+        last_camera_pos.scale !== data.scale
+      ) {
         saveTimeout.current = setTimeout(() => {
           console.log("saving camera");
           localStorage.setItem("camera", JSON.stringify(data));
+
+          last_camera_pos.x = data.x;
+          last_camera_pos.y = data.y;
+          last_camera_pos.scale = data.scale;
         }, 300);
       }
-
-      last_camera_pos.x = data.x;
-      last_camera_pos.y = data.y;
     });
 
     return () => {
