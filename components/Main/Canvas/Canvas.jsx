@@ -2,8 +2,8 @@
 
 // IMPORTANT NOTE -> useState must not be used in this component as it will
 // cause the canvas to reload requiring the entire drawing to be redrawn every time
-// state is changed. To ovoid this any state in the this component must be useRef
-// to avoid this.
+// any state is changed. To ovoid this, any state in the this component must be a useRef
+// or the "state_bridge" if shared with other components.
 
 import styles from "./Canvas.module.css";
 
@@ -23,7 +23,7 @@ export default function Canvas({
   lineSettingsBridge,
   cameraBridge,
 }) {
-  // The custom bridge to link data and events across components, without triggering a rerender.
+  // ----------------------- State bridges ----------------------------
   const drawing_bridge = drawingBridge.current;
   const line_settings_bridge = lineSettingsBridge.current;
   const camera_bridge = cameraBridge.current;
@@ -55,8 +55,8 @@ export default function Canvas({
 
   const mousePosition = useRef({ x: 0, y: 0 });
 
-  // If the screen size is changed this will modify the canvas size while retaining the resolution.
-  // DEV NOTE -> Be sure to apply a debounce timer to the redraw of the canvas if performance is poor.
+  const saveTimeout = useRef(null);
+
   useEffect(() => {
     const canvas = canvasRef.current;
 
@@ -152,11 +152,125 @@ export default function Canvas({
       });
     }
 
+    async function saveDrawing() {
+      const drawing = {
+        data: {},
+        camera: {},
+      };
+
+      drawing.data = drawingBridge.current.get();
+      drawing.camera = cameraBridge.current.get();
+
+      if (!drawing.data.name) {
+        // No drawing name created yet, need to create name.
+        console.log("No drawing name.");
+        return;
+      }
+
+      const json = JSON.stringify(drawing);
+
+      // NOTE -> I am doing all compression/decompression on the client side.
+      // This is to increase transfer speeds and also reduce the amount of storage space used on appwrite.
+      const compressed = pako.gzip(json);
+
+      const file = new File([compressed], "drawing.json.gz", {
+        type: "application/gzip",
+      });
+
+      const form_data = new FormData();
+      form_data.append("file", file);
+      form_data.append("name", drawing_name);
+
+      const res = await fetch("api/private/save_drawing", {
+        method: "PUT",
+        body: form_data,
+      });
+
+      if (!res.ok) {
+        console.error(res);
+        return;
+      }
+    }
+
+    const handleKeyDown = (event) => {
+      const key = event.key;
+      console.log("Key Down-> ", key);
+
+      if (key === "Shift") {
+        // If held activate move/zoom mode
+        cameraBridge.current.mutate((data) => {
+          data.active = true;
+        });
+      }
+
+      if (key === "-") {
+        cameraBridge.current.mutate((data) => {
+          if (data.scale * 0.9 > 0.1) {
+            data.scale *= 0.9;
+          } else {
+            data.scale = 0.1;
+          }
+        });
+      }
+
+      if (key === "=" || key === "+") {
+        cameraBridge.current.mutate((data) => {
+          if (data.scale * 1.1 < 2.0) {
+            data.scale *= 1.1;
+          } else {
+            data.scale = 2.0;
+          }
+        });
+      }
+    };
+
+    const handleKeyUp = (event) => {
+      const key = event.key;
+      console.log("Key Up-> ", key);
+
+      if (key === "Shift") {
+        // Remove move/zoom mode
+        cameraBridge.current.mutate((data) => {
+          data.active = false;
+        });
+      }
+
+      if (key === "s") {
+        saveDrawing();
+      }
+    };
+
+    function load_camera() {
+      console.log("Loading camera");
+      const camera_data = localStorage.getItem("camera");
+
+      if (!camera_data) return;
+
+      const camera_bridge = cameraBridge.current;
+
+      const parsed_camera = JSON.parse(camera_data);
+
+      console.log(parsed_camera);
+
+      camera_bridge.mutate((data) => {
+        data.x = parsed_camera.x;
+        data.y = parsed_camera.y;
+        data.scale = parsed_camera.scale;
+      });
+    }
+
+    load_camera();
+
     // ---------------------- Events ----------------------
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    canvas.addEventListener("wheel", handleZoom, { passive: false });
+
     window.addEventListener("resize", handleResize);
 
+    // --------------------- State bridge events ---------------------
     // Save each new line to local storage as soon as it is created.
-    const save_line_sub = drawing_bridge.listen((data) => {
+    const drawing_listener = drawing_bridge.listen((data) => {
       console.log("Saving new line...");
 
       if (amountOfLines.current < data.lines.length) {
@@ -177,8 +291,12 @@ export default function Canvas({
     let last_scale = camera_bridge.get().scale;
     let lastMousePos = mousePosition.current;
     let initial_redraw = false;
-    // NOTE -> This event is tied to the shift key being held down, see the Main component for the key event handling.
-    const move_mode_sub = camera_bridge.listen((data) => {
+    const last_camera_pos = {
+      x: 0,
+      y: 0,
+      scale: 0,
+    };
+    const camera_listener = camera_bridge.listen((data) => {
       if (data.active) {
         moveMode.current = true;
       } else {
@@ -199,16 +317,34 @@ export default function Canvas({
         last_scale = data.scale;
         initial_redraw = true;
       }
-    });
 
-    canvas.addEventListener("wheel", handleZoom, { passive: false });
+      clearTimeout(saveTimeout.current);
+
+      if (
+        // If any of the cameras state has changed and is stable for
+        last_camera_pos.x === data.x ||
+        last_camera_pos.y === data.y ||
+        last_camera_pos.scale === data.scale
+      ) {
+        saveTimeout.current = setTimeout(() => {
+          console.log("saving camera");
+          localStorage.setItem("camera", JSON.stringify(data));
+        }, 300);
+      }
+
+      last_camera_pos.x = data.x;
+      last_camera_pos.y = data.y;
+      last_camera_pos.scale = data.scale;
+    });
 
     // Cleaning up the events, (preventing multiple copies every time the component is rerendered)
     return () => {
-      window.removeEventListener("resize", handleResize);
-      save_line_sub(); // Deleting the bridge event listener subscription.
-      move_mode_sub();
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
       canvas.removeEventListener("wheel", handleZoom);
+      window.removeEventListener("resize", handleResize);
+      drawing_listener(); // Deleting the "state_bridge" event listener.
+      camera_listener();
     };
   }, []);
 
