@@ -1,21 +1,19 @@
 // This component is used as a global state share.
-// IMPORTANT NOTE -> useState must not be used in this main parent component,
-// instead only useRef will be allowed. In order to solve the problem of canvas rerenders,
-// yet still having a way to share state i created a small work around, see "state_bridge.js"
-// in the "libs" dir for more details.
+// IMPORTANT NOTE -> useState must only be used carefully, the Canvas component needs to avoid rerenders when ever possible.
+// This can cause the drawing to need to be rerendered every time state is changed, witch can hurt performance.
+// Because of this any shared state that i need to have absolute control over will use the "state_bridge", see lib/state_bridge.js for more details.
 
 "use client";
 
 import styles from "./Main.module.css";
 
+import DrawingNamePopUp from "./DrawingNamePopUp/DrawingNamePopUp";
 import Sidebar from "./Sidebar/Sidebar";
 import Canvas from "./Canvas/Canvas";
 
 import { createBridge } from "../../lib/state_bridge";
 
-import pako from "pako";
-
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function Main() {
   // ------------------------------ Bridges ------------------------------
@@ -43,20 +41,26 @@ export default function Main() {
     }),
   );
 
-  // --------------------------------- Local useRef's ---------------------------------
+  const [nameDrawingPopUp, setNameDrawingPopUp] = useState(false);
 
-  // --------------------------------- Macro events ---------------------------------
   useEffect(() => {
     return () => {};
   }, []);
 
   return (
     <div className={styles.app}>
+      {nameDrawingPopUp ? (
+        <DrawingNamePopUp
+          drawingBridge={drawingBridge}
+          setNameDrawingPopUp={setNameDrawingPopUp}
+        />
+      ) : null}
       <div className={styles.workArea}>
         <Canvas
           drawingBridge={drawingBridge}
           lineSettingsBridge={lineSettingsBridge}
           cameraBridge={cameraBridge}
+          setNameDrawingPopUp={setNameDrawingPopUp}
         />
       </div>
       <div className={styles.sidebar}>

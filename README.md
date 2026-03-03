@@ -33,7 +33,3 @@
 ## NOTES
 
 - Should probably move all the current key events to the [Canvas] component so the key events are not global. It would be best to deligate key press events in the Main component for global effects. Like toggling sub menus with key presses. Also should make sure to tie the (Canvas) specific key events to work only if hovering the canvas element.
-
-## Objective
-
-- Clean up the Canvas component and move all the rendering maths and lower level stuff into the libs, then move the key events to the Canvas elements.

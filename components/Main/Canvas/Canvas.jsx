@@ -16,12 +16,15 @@ import {
   drawLastPoint,
 } from "../../../lib/canvas";
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
+
+import pako from "pako";
 
 export default function Canvas({
   drawingBridge,
   lineSettingsBridge,
   cameraBridge,
+  setNameDrawingPopUp,
 }) {
   // ----------------------- State bridges ----------------------------
   const drawing_bridge = drawingBridge.current;
@@ -108,7 +111,29 @@ export default function Canvas({
 
     loadLines();
 
+    function load_camera() {
+      console.log("Loading camera");
+      const camera_data = localStorage.getItem("camera");
+
+      if (!camera_data) return;
+
+      const camera_bridge = cameraBridge.current;
+
+      const parsed_camera = JSON.parse(camera_data);
+
+      console.log(parsed_camera);
+
+      camera_bridge.mutate((data) => {
+        data.x = parsed_camera.x;
+        data.y = parsed_camera.y;
+        data.scale = parsed_camera.scale;
+      });
+    }
+
+    load_camera();
+
     resizeCanvas(canvas, centerOffset, window);
+    rerender(canvas, camera_bridge, drawing_bridge, centerOffset);
 
     let delta = 0;
     function handleZoom(event) {
@@ -163,6 +188,7 @@ export default function Canvas({
 
       if (!drawing.data.name) {
         // No drawing name created yet, need to create name.
+        setNameDrawingPopUp(true);
         console.log("No drawing name.");
         return;
       }
@@ -239,27 +265,6 @@ export default function Canvas({
         saveDrawing();
       }
     };
-
-    function load_camera() {
-      console.log("Loading camera");
-      const camera_data = localStorage.getItem("camera");
-
-      if (!camera_data) return;
-
-      const camera_bridge = cameraBridge.current;
-
-      const parsed_camera = JSON.parse(camera_data);
-
-      console.log(parsed_camera);
-
-      camera_bridge.mutate((data) => {
-        data.x = parsed_camera.x;
-        data.y = parsed_camera.y;
-        data.scale = parsed_camera.scale;
-      });
-    }
-
-    load_camera();
 
     // ---------------------- Events ----------------------
     window.addEventListener("keydown", handleKeyDown);
@@ -397,73 +402,75 @@ export default function Canvas({
   };
 
   return (
-    <canvas
-      ref={canvasRef}
-      className={styles.canvas}
-      onMouseDown={(event) => {
-        if (!moveMode.current) {
-          startDrawing(event);
-        }
-
-        if (event.button === 0) {
-          leftClickDown.current = true;
-        }
-      }}
-      onMouseMove={(event) => {
-        mousePosition.current = {
-          x: event.nativeEvent.offsetX,
-          y: event.nativeEvent.offsetY,
-        };
-
-        if (!moveMode.current) {
-          draw(event);
-        } else if (leftClickDown.current) {
-          // If put in move mode while drawing a line.
-          if (drawing.current) {
-            stopDrawing();
+    <div>
+      <canvas
+        ref={canvasRef}
+        className={styles.canvas}
+        onMouseDown={(event) => {
+          if (!moveMode.current) {
+            startDrawing(event);
           }
 
-          const offset = {
+          if (event.button === 0) {
+            leftClickDown.current = true;
+          }
+        }}
+        onMouseMove={(event) => {
+          mousePosition.current = {
             x: event.nativeEvent.offsetX,
             y: event.nativeEvent.offsetY,
           };
 
-          // Mutate the cameras position.
-          if (lastMovePos.current.is_captured) {
-            camera_bridge.mutate((data) => {
-              const dx = offset.x - lastMovePos.current.x;
-              const dy = offset.y - lastMovePos.current.y;
+          if (!moveMode.current) {
+            draw(event);
+          } else if (leftClickDown.current) {
+            // If put in move mode while drawing a line.
+            if (drawing.current) {
+              stopDrawing();
+            }
 
-              data.x += dx / data.scale;
-              data.y += dy / data.scale;
+            const offset = {
+              x: event.nativeEvent.offsetX,
+              y: event.nativeEvent.offsetY,
+            };
 
+            // Mutate the cameras position.
+            if (lastMovePos.current.is_captured) {
+              camera_bridge.mutate((data) => {
+                const dx = offset.x - lastMovePos.current.x;
+                const dy = offset.y - lastMovePos.current.y;
+
+                data.x += dx / data.scale;
+                data.y += dy / data.scale;
+
+                lastMovePos.current.x = offset.x;
+                lastMovePos.current.y = offset.y;
+              });
+            } else {
               lastMovePos.current.x = offset.x;
               lastMovePos.current.y = offset.y;
-            });
-          } else {
-            lastMovePos.current.x = offset.x;
-            lastMovePos.current.y = offset.y;
 
-            lastMovePos.current.is_captured = true;
+              lastMovePos.current.is_captured = true;
+            }
           }
-        }
-      }}
-      onMouseUp={(event) => {
-        if (!moveMode.current) {
+        }}
+        onMouseUp={(event) => {
+          if (!moveMode.current) {
+            stopDrawing();
+          }
+          if (event.button === 0) {
+            leftClickDown.current = false;
+            lastMovePos.current.is_captured = false;
+          }
+        }}
+        onMouseLeave={(event) => {
           stopDrawing();
-        }
-        if (event.button === 0) {
+
+          // moveMode.current = false;
           leftClickDown.current = false;
           lastMovePos.current.is_captured = false;
-        }
-      }}
-      onMouseLeave={(event) => {
-        stopDrawing();
-
-        // moveMode.current = false;
-        leftClickDown.current = false;
-        lastMovePos.current.is_captured = false;
-      }}
-    />
+        }}
+      />
+    </div>
   );
 }
