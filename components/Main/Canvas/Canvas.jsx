@@ -6,7 +6,6 @@
 // or the "state_bridge" if shared with other components.
 
 import styles from "./Canvas.module.css";
-
 import {
   rerender,
   resizeCanvas,
@@ -16,14 +15,15 @@ import {
   drawLastPoint,
 } from "../../../lib/canvas";
 
-import { useRef, useEffect, useState } from "react";
+import { saveDrawing } from "../../../lib/drawing_requests";
 
-import pako from "pako";
+import { useRef, useEffect, useState } from "react";
 
 export default function Canvas({
   drawingBridge,
   lineSettingsBridge,
   cameraBridge,
+  nameDrawingPopUp,
   setNameDrawingPopUp,
 }) {
   // ----------------------- State bridges ----------------------------
@@ -59,6 +59,117 @@ export default function Canvas({
   const mousePosition = useRef({ x: 0, y: 0 });
 
   const saveTimeout = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+
+    const handleKeyDown = (event) => {
+      if (nameDrawingPopUp) {
+        return;
+      }
+      const key = event.key;
+      console.log("Key Down-> ", key);
+
+      if (key === "Shift") {
+        // If held activate move/zoom mode
+        cameraBridge.current.mutate((data) => {
+          data.active = true;
+        });
+      }
+
+      if (key === "-") {
+        cameraBridge.current.mutate((data) => {
+          if (data.scale * 0.9 > 0.1) {
+            data.scale *= 0.9;
+          } else {
+            data.scale = 0.1;
+          }
+        });
+      }
+
+      if (key === "=" || key === "+") {
+        cameraBridge.current.mutate((data) => {
+          if (data.scale * 1.1 < 2.0) {
+            data.scale *= 1.1;
+          } else {
+            data.scale = 2.0;
+          }
+        });
+      }
+    };
+
+    const handleKeyUp = (event) => {
+      if (nameDrawingPopUp) {
+        return;
+      }
+      const key = event.key;
+      console.log("Key Up-> ", key);
+
+      if (key === "Shift") {
+        // Remove move/zoom mode
+        cameraBridge.current.mutate((data) => {
+          data.active = false;
+        });
+      }
+
+      if (key === "s") {
+        saveDrawing(drawing_bridge, camera_bridge, setNameDrawingPopUp);
+      }
+    };
+
+    let delta = 0;
+    function handleZoom(event) {
+      if (!moveMode.current) return; // If shift is held.
+
+      event.preventDefault(); // Disable normal page scrolling.
+
+      camera_bridge.mutate((data) => {
+        let scale = data.scale;
+
+        const scroll_amount =
+          Math.abs(event.deltaY) > Math.abs(event.deltaX)
+            ? event.deltaY
+            : event.deltaX;
+
+        // If the direction of the scroll is changed reset the delta.
+        if (
+          (scroll_amount > 0 && delta < 0) ||
+          (scroll_amount < 0 && delta > 0)
+        ) {
+          delta = 0;
+        }
+
+        delta += scroll_amount;
+
+        if (delta > 10) {
+          scale *= 1.1;
+          delta = 0;
+        } else if (delta < -10) {
+          scale *= 0.9;
+          delta = 0;
+        }
+
+        if (scale < 0.1) {
+          scale = 0.1;
+        } else if (scale > 2.0) {
+          scale = 2.0;
+        }
+
+        data.scale = scale;
+      });
+    }
+
+    // ---------------------- Events ----------------------
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    canvas.addEventListener("wheel", handleZoom, { passive: false });
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+      canvas.removeEventListener("wheel", handleZoom);
+    };
+  }, [nameDrawingPopUp]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -135,142 +246,7 @@ export default function Canvas({
     resizeCanvas(canvas, centerOffset, window);
     rerender(canvas, camera_bridge, drawing_bridge, centerOffset);
 
-    let delta = 0;
-    function handleZoom(event) {
-      if (!moveMode.current) return; // If shift is held.
-
-      event.preventDefault(); // Disable normal page scrolling.
-
-      camera_bridge.mutate((data) => {
-        let scale = data.scale;
-
-        const scroll_amount =
-          Math.abs(event.deltaY) > Math.abs(event.deltaX)
-            ? event.deltaY
-            : event.deltaX;
-
-        // If the direction of the scroll is changed reset the delta.
-        if (
-          (scroll_amount > 0 && delta < 0) ||
-          (scroll_amount < 0 && delta > 0)
-        ) {
-          delta = 0;
-        }
-
-        delta += scroll_amount;
-
-        if (delta > 10) {
-          scale *= 1.1;
-          delta = 0;
-        } else if (delta < -10) {
-          scale *= 0.9;
-          delta = 0;
-        }
-
-        if (scale < 0.1) {
-          scale = 0.1;
-        } else if (scale > 2.0) {
-          scale = 2.0;
-        }
-
-        data.scale = scale;
-      });
-    }
-
-    async function saveDrawing() {
-      const drawing = {
-        data: {},
-        camera: {},
-      };
-
-      drawing.data = drawingBridge.current.get();
-      drawing.camera = cameraBridge.current.get();
-
-      if (!drawing.data.name) {
-        // No drawing name created yet, need to create name.
-        setNameDrawingPopUp(true);
-        console.log("No drawing name.");
-        return;
-      }
-
-      const json = JSON.stringify(drawing);
-
-      // NOTE -> I am doing all compression/decompression on the client side.
-      // This is to increase transfer speeds and also reduce the amount of storage space used on appwrite.
-      const compressed = pako.gzip(json);
-
-      const file = new File([compressed], "drawing.json.gz", {
-        type: "application/gzip",
-      });
-
-      const form_data = new FormData();
-      form_data.append("file", file);
-      form_data.append("name", drawing_name);
-
-      const res = await fetch("api/private/save_drawing", {
-        method: "PUT",
-        body: form_data,
-      });
-
-      if (!res.ok) {
-        console.error(res);
-        return;
-      }
-    }
-
-    const handleKeyDown = (event) => {
-      const key = event.key;
-      console.log("Key Down-> ", key);
-
-      if (key === "Shift") {
-        // If held activate move/zoom mode
-        cameraBridge.current.mutate((data) => {
-          data.active = true;
-        });
-      }
-
-      if (key === "-") {
-        cameraBridge.current.mutate((data) => {
-          if (data.scale * 0.9 > 0.1) {
-            data.scale *= 0.9;
-          } else {
-            data.scale = 0.1;
-          }
-        });
-      }
-
-      if (key === "=" || key === "+") {
-        cameraBridge.current.mutate((data) => {
-          if (data.scale * 1.1 < 2.0) {
-            data.scale *= 1.1;
-          } else {
-            data.scale = 2.0;
-          }
-        });
-      }
-    };
-
-    const handleKeyUp = (event) => {
-      const key = event.key;
-      console.log("Key Up-> ", key);
-
-      if (key === "Shift") {
-        // Remove move/zoom mode
-        cameraBridge.current.mutate((data) => {
-          data.active = false;
-        });
-      }
-
-      if (key === "s") {
-        saveDrawing();
-      }
-    };
-
-    // ---------------------- Events ----------------------
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
-    canvas.addEventListener("wheel", handleZoom, { passive: false });
-
+    // Events
     window.addEventListener("resize", handleResize);
 
     // --------------------- State bridge events ---------------------
@@ -344,9 +320,6 @@ export default function Canvas({
 
     // Cleaning up the events, (preventing multiple copies every time the component is rerendered)
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
-      canvas.removeEventListener("wheel", handleZoom);
       window.removeEventListener("resize", handleResize);
       drawing_listener(); // Deleting the "state_bridge" event listener.
       camera_listener();

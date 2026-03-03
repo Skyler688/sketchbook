@@ -21,7 +21,7 @@ export default function Main() {
     createBridge({
       lines: [],
       redo_stack: [],
-      name: null,
+      name: "",
     }),
   );
 
@@ -52,6 +52,7 @@ export default function Main() {
       {nameDrawingPopUp ? (
         <DrawingNamePopUp
           drawingBridge={drawingBridge}
+          cameraBridge={cameraBridge}
           setNameDrawingPopUp={setNameDrawingPopUp}
         />
       ) : null}
@@ -60,6 +61,7 @@ export default function Main() {
           drawingBridge={drawingBridge}
           lineSettingsBridge={lineSettingsBridge}
           cameraBridge={cameraBridge}
+          nameDrawingPopUp={nameDrawingPopUp}
           setNameDrawingPopUp={setNameDrawingPopUp}
         />
       </div>

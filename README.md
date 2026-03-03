@@ -20,7 +20,8 @@
 - Add a clear drawing feature.
 - Add cmd + z, and cmd + [shift] + z, undo and redo.
 - If time look into line selection, allowing for deleting, moving, and editing any line. (Make new branch if doing this).
-- Add and test drawing saving and fetching to appwrite.
+- (DONE) Add and test drawing saving and fetching to appwrite.
+- Add a save file name to local storage/ a file info header like display component.
 - Come up with a method to filter out all points that are not in the current screen, also to decrease draw calls. Is currently wasting allot compute drawing the hole world space.
 - Before saving a line run a point reduction filter that will remove all in between points that result in a straight line, within a given margin.
 - Look into using curves in the render of the drawing to increase the performance and make the lines smoother.
@@ -32,4 +33,4 @@
 
 ## NOTES
 
-- Should probably move all the current key events to the [Canvas] component so the key events are not global. It would be best to deligate key press events in the Main component for global effects. Like toggling sub menus with key presses. Also should make sure to tie the (Canvas) specific key events to work only if hovering the canvas element.
+- (DONE) Should probably move all the current key events to the [Canvas] component so the key events are not global. It would be best to deligate key press events in the Main component for global effects. Like toggling sub menus with key presses. Also should make sure to tie the (Canvas) specific key events to work only if hovering the canvas element.

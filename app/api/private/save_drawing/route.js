@@ -1,4 +1,4 @@
-export const runtime = "nodejs";
+// export const runtime = "nodejs";
 
 import {
   database,
@@ -20,37 +20,76 @@ export async function PUT(req) {
 
     // NOTE -> For the sake of time i am not implementing any type of chunking/reassembly as the compressed drawing files are likely to be pretty small.
     // Ideally given the infanate draw space a custom file chunking system would be needed, but for now this works.
+
     const drawing_buffer = form_data.get("file");
     const drawing_name = form_data.get("name");
 
-    console.log(file_name);
-
     // First send request to database to determin if this is a create or update.
-    const is_drawing = await database.listRows({
+    const drawing_rows = await database.listRows({
       databaseId: database_id,
       tableId: "drawings",
       queries: [
-        Query.equal("drawing_name", drawing_name),
-        Query.equal("user", user_id),
+        Query.equal("drawing_name", [drawing_name]),
+        Query.equal("user", [user_id]),
       ],
     });
 
+    // console.log(drawing_rows);
+
     // If the drawing exist update the drawing file.
-    if (is_drawing.total > 0) {
+    if (drawing_rows.total > 0) {
+      const drawing_row = drawing_rows.rows[0];
+
+      // Just incase the file gets deleted but the create fails.
+      try {
+        await storage.deleteFile({
+          bucketId: storage_id,
+          fileId: String(drawing_row.drawing_id),
+        });
+      } catch (error) {
+        console.log("No file to update, creating new.");
+      }
+
+      const create_result = await storage.createFile({
+        bucketId: storage_id,
+        fileId: String(drawing_row.drawing_id),
+        file: drawing_buffer,
+      });
+
+      if (!create_result.$id) {
+        throw new Error("Failed to update file");
+      }
     } else {
       // If not create the file.
+      const drawing_id = ID.unique();
+
+      const drawing_row = await database.createRow({
+        databaseId: database_id,
+        tableId: "drawings",
+        rowId: ID.unique(),
+        data: {
+          user: user_id,
+          drawing_name: drawing_name,
+          drawing_id: drawing_id,
+        },
+      });
+
+      if (!drawing_row.$id) {
+        return new Response(
+          JSON.stringify({ success: false, message: "Failed save drawing" }),
+          { status: 500 },
+        );
+      }
 
       // Sending file to appwrite storage bucket. NOTE -> no file name needed just and id.
       const result = await storage.createFile({
         bucketId: storage_id,
-        fileId: ID.unique(),
-        file: file_buffer,
+        fileId: drawing_id,
+        file: drawing_buffer,
       });
+
+      console.log(result);
     }
-
-    // Send file object back to appwrite storage.
-
-    // If success add new row to drawings in data base linking the users id as the relationship.
 
     return new Response(JSON.stringify({ success: true }), { status: 200 });
   } catch (error) {
