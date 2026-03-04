@@ -2,6 +2,8 @@
 
 import styles from "./DrawingNamePopUp.module.css";
 
+import { useRef, useState } from "react";
+
 import { saveDrawing } from "../../../lib/drawing_requests";
 
 export default function DrawingNamePopUp({
@@ -12,7 +14,14 @@ export default function DrawingNamePopUp({
   const drawing_bridge = drawingBridge.current;
   const camera_bridge = cameraBridge.current;
 
+  const [warning, setWarning] = useState("");
+  const [drawingName, setDrawingName] = useState("");
+
   async function save() {
+    drawing_bridge.mutate((data) => {
+      data.name = drawingName;
+    });
+
     const result = await saveDrawing(
       drawing_bridge,
       camera_bridge,
@@ -21,6 +30,8 @@ export default function DrawingNamePopUp({
 
     if (!result) {
       // Tell user save failed.
+      setWarning("Error, failed to save drawing :(");
+      return;
     }
 
     setNameDrawingPopUp(false);
@@ -38,9 +49,7 @@ export default function DrawingNamePopUp({
           type="text"
           //   value={name}
           onChange={(e) => {
-            drawing_bridge.mutate((data) => {
-              data.name = e.target.value;
-            });
+            setDrawingName(e.target.value);
           }}
           placeholder="Drawing name"
           autoFocus
@@ -58,12 +67,23 @@ export default function DrawingNamePopUp({
 
           <button
             className={`${styles.btn} ${styles.btnSave}`}
-            onClick={save}
-            disabled={drawing_bridge.get().name.length > 0}
+            onClick={(e) => {
+              save();
+            }}
+            disabled={drawingName === ""}
           >
             Save
           </button>
         </div>
+
+        <p
+          className={styles.warning}
+          style={{
+            display: warning === "" ? "none" : "block",
+          }}
+        >
+          {warning}
+        </p>
       </div>
     </div>
   );

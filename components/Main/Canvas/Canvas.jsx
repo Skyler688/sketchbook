@@ -15,7 +15,7 @@ import {
   drawLastPoint,
 } from "../../../lib/canvas";
 
-import { saveDrawing } from "../../../lib/drawing_requests";
+import { saveDrawing, downloadDrawing } from "../../../lib/drawing_requests";
 
 import { useRef, useEffect, useState } from "react";
 
@@ -250,11 +250,12 @@ export default function Canvas({
     window.addEventListener("resize", handleResize);
 
     // --------------------- State bridge events ---------------------
-    // Save each new line to local storage as soon as it is created.
+    let last_drawing_name = drawing_bridge.get().name;
     const drawing_listener = drawing_bridge.listen((data) => {
-      console.log("Saving new line...");
-
+      // Save each new line to local storage as soon as it is created.
       if (amountOfLines.current < data.lines.length) {
+        console.log("Saving new line...");
+
         const lines_to_save = data.lines.length - amountOfLines.current;
 
         for (let i = 0; i < lines_to_save; i++) {
@@ -266,6 +267,15 @@ export default function Canvas({
         }
 
         amountOfLines.current = data.lines.length;
+      }
+
+      // If the name is updated, save the new name.
+      if (last_drawing_name !== data.name) {
+        console.log("Saving drawing name");
+
+        localStorage.setItem("drawing_name", data.name);
+
+        last_drawing_name = data.name;
       }
     });
 
