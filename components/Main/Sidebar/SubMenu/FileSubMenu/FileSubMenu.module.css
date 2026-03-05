@@ -6,7 +6,7 @@
   flex-direction: column;
 } */
 
-.searchBar {
+/* .searchBar {
   padding: 12px;
   border-bottom: 1px solid #2a2a2a;
   display: flex;
@@ -24,6 +24,12 @@
 
 .searchBar input::placeholder {
   color: #999;
+} */
+
+.title {
+  text-align: center;
+  margin-block: 10px;
+  color: #c6c6c6;
 }
 
 .fileList {
@@ -40,7 +46,16 @@
   border-radius: 6px;
   cursor: pointer;
   transition: background 0.15s ease;
-  color: #cfcfcf;
+  background-color: #2a2a2a;
+  color: #ffffff;
+}
+
+.add {
+  background-color: #313131;
+  border: none;
+  font-size: 25px;
+  color: #c6c6c6;
+  margin-top: 10px;
 }
 
 .fileItem:hover {
@@ -48,8 +63,13 @@
   color: #fff;
 }
 
-.emptyMessage {
-  color: #666;
-  text-align: center;
-  margin-top: 16px;
+.fileItem:disabled {
+  background-color: #2a2a2a;
+  color: #858585;
+  cursor: default;
+}
+
+.add:hover {
+  cursor: pointer;
+  color: #fff;
 }

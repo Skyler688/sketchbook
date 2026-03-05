@@ -1,70 +1,61 @@
 "use client";
 
-import styles from "./DrawingNamePopUp.module.css";
+import styles from "./NotSavedPopUp.module.css";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 
-import { saveDrawing } from "../../../lib/drawing_requests";
+import { saveDrawing, downloadDrawing } from "../../../lib/drawing_requests";
 
-export default function DrawingNamePopUp({
+export default function NotSavedPopUp({
+  setNotSavedPopUp,
   drawingBridge,
   cameraBridge,
-  setNameDrawingPopUp,
   isSavedBridge,
+  drawingName,
 }) {
   const drawing_bridge = drawingBridge.current;
   const camera_bridge = cameraBridge.current;
   const is_saved_bridge = isSavedBridge.current;
 
   const [warning, setWarning] = useState("");
-  const [drawingName, setDrawingName] = useState("");
 
   async function save() {
-    drawing_bridge.mutate((data) => {
-      data.name = drawingName;
-    });
-
-    const result = await saveDrawing(drawing_bridge, camera_bridge);
-
-    if (!result) {
-      // Tell user save failed.
+    if (!(await saveDrawing(drawing_bridge, camera_bridge))) {
       setWarning("Error, failed to save drawing :(");
       return;
     }
 
     is_saved_bridge.mutate((data) => {
       data.status = true;
+      data.id_fresh = true;
     });
 
-    setNameDrawingPopUp(false);
+    // If the no name is passed that means a new blank untiltled drawing is being created,
+    // in this case the download is skipped.
+    if (drawingName !== "") {
+      downloadDrawing(drawing_bridge, camera_bridge, drawingName);
+    }
+
+    setNotSavedPopUp(false);
   }
 
   return (
     <div className={styles.modalOverlay}>
       <div className={styles.modal}>
-        <h2 className={styles.title}>Current drawing not named</h2>
+        <h2 className={styles.title}>Unsaved Changes</h2>
 
-        <p className={styles.text}>Please enter a name for this drawing.</p>
-
-        <input
-          className={styles.input}
-          type="text"
-          //   value={name}
-          onChange={(e) => {
-            setDrawingName(e.target.value);
-          }}
-          placeholder="Drawing name"
-          autoFocus
-        />
+        <p className={styles.text}>
+          Would you like to save changes before opening new drawing?
+        </p>
 
         <div className={styles.actions}>
           <button
             className={`${styles.btn} ${styles.btnCancel}`}
             onClick={() => {
-              setNameDrawingPopUp(false);
+              setNotSavedPopUp(false);
             }}
           >
-            Cancel
+            No
           </button>
 
           <button
@@ -72,9 +63,8 @@ export default function DrawingNamePopUp({
             onClick={(e) => {
               save();
             }}
-            disabled={drawingName === ""}
           >
-            Save
+            Yes
           </button>
         </div>
 

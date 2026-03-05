@@ -12,7 +12,15 @@ import { TbLogout2 } from "react-icons/tb";
 
 import { useRouter } from "next/navigation";
 
-export default function Sidebar({ lineSettingsBridge }) {
+export default function Sidebar({
+  drawingBridge,
+  cameraBridge,
+  lineSettingsBridge,
+  isSavedBridge,
+  setNotSavedPopUp,
+  setNameDrawingPopUp,
+  setDrawingName,
+}) {
   const router = useRouter();
 
   const sideBarWidth = 60;
@@ -149,7 +157,16 @@ export default function Sidebar({ lineSettingsBridge }) {
         {subMenu === "tools" && (
           <ToolsSubmenu lineSettingsBridge={lineSettingsBridge} />
         )}
-        {subMenu === "files" && <FileSubmenu />}
+        {subMenu === "files" && (
+          <FileSubmenu
+            drawingBridge={drawingBridge}
+            cameraBridge={cameraBridge}
+            isSavedBridge={isSavedBridge}
+            setNotSavedPopUp={setNotSavedPopUp}
+            setNameDrawingPopUp={setNameDrawingPopUp}
+            setDrawingName={setDrawingName}
+          />
+        )}
 
         <button
           ref={widthSelector}

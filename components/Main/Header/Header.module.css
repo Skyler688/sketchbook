@@ -1,0 +1,12 @@
+.header {
+  width: 100vw;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.drawingName {
+  font-size: 20px;
+  color: rgb(214, 214, 214);
+}

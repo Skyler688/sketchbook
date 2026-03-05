@@ -23,6 +23,7 @@ export default function Canvas({
   drawingBridge,
   lineSettingsBridge,
   cameraBridge,
+  isSavedBridge,
   nameDrawingPopUp,
   setNameDrawingPopUp,
 }) {
@@ -30,6 +31,7 @@ export default function Canvas({
   const drawing_bridge = drawingBridge.current;
   const line_settings_bridge = lineSettingsBridge.current;
   const camera_bridge = cameraBridge.current;
+  const is_saved_bridge = isSavedBridge.current;
 
   const canvasRef = useRef(null);
   const drawing = useRef(false);
@@ -98,7 +100,7 @@ export default function Canvas({
       }
     };
 
-    const handleKeyUp = (event) => {
+    const handleKeyUp = async (event) => {
       if (nameDrawingPopUp) {
         return;
       }
@@ -113,7 +115,18 @@ export default function Canvas({
       }
 
       if (key === "s") {
-        saveDrawing(drawing_bridge, camera_bridge, setNameDrawingPopUp);
+        if (drawing_bridge.get().name === "") {
+          setNameDrawingPopUp(true);
+          return;
+        }
+
+        if (await saveDrawing(drawing_bridge, camera_bridge)) {
+          is_saved_bridge.mutate((data) => {
+            data.status = true;
+          });
+        } else {
+          // TODO -> ADD WARNING THAT SAVE FAILED
+        }
       }
     };
 
@@ -205,6 +218,8 @@ export default function Canvas({
       console.log("Loading drawing...");
       const saved_lines = [];
 
+      amountOfLines.current = 0;
+
       let index = 0;
       while (true) {
         const saved = localStorage.getItem(`line_${index}`);
@@ -216,13 +231,13 @@ export default function Canvas({
       }
 
       drawing_bridge.mutate((data) => {
-        data.lines = saved_lines || [];
+        data.lines = saved_lines;
       });
     }
 
     loadLines();
 
-    function load_camera() {
+    function loadCamera() {
       console.log("Loading camera");
       const camera_data = localStorage.getItem("camera");
 
@@ -232,8 +247,6 @@ export default function Canvas({
 
       const parsed_camera = JSON.parse(camera_data);
 
-      console.log(parsed_camera);
-
       camera_bridge.mutate((data) => {
         data.x = parsed_camera.x;
         data.y = parsed_camera.y;
@@ -241,7 +254,20 @@ export default function Canvas({
       });
     }
 
-    load_camera();
+    loadCamera();
+
+    function loadDrawingName() {
+      console.log("Loading drawing name");
+      const drawing_name = localStorage.getItem("drawing_name");
+
+      if (!drawing_name) return;
+
+      drawing_bridge.mutate((data) => {
+        data.name = drawing_name;
+      });
+    }
+
+    loadDrawingName();
 
     resizeCanvas(canvas, centerOffset, window);
     rerender(canvas, camera_bridge, drawing_bridge, centerOffset);
@@ -255,6 +281,10 @@ export default function Canvas({
       // Save each new line to local storage as soon as it is created.
       if (amountOfLines.current < data.lines.length) {
         console.log("Saving new line...");
+
+        is_saved_bridge.mutate((data) => {
+          data.status = false;
+        });
 
         const lines_to_save = data.lines.length - amountOfLines.current;
 
@@ -319,6 +349,15 @@ export default function Canvas({
       ) {
         saveTimeout.current = setTimeout(() => {
           console.log("saving camera");
+
+          is_saved_bridge.mutate((data) => {
+            if (!data.is_fresh) {
+              data.status = false;
+            } else {
+              data.is_fresh = false;
+            }
+          });
+
           localStorage.setItem("camera", JSON.stringify(data));
         }, 300);
       }

@@ -8,8 +8,10 @@
 import styles from "./Main.module.css";
 
 import DrawingNamePopUp from "./DrawingNamePopUp/DrawingNamePopUp";
+import NotSavedPopUp from "./NotSavedPopUp/NotSavedPopUp";
 import Sidebar from "./Sidebar/Sidebar";
 import Canvas from "./Canvas/Canvas";
+import Header from "./Header/Header";
 
 import { createBridge } from "../../lib/state_bridge";
 
@@ -41,7 +43,16 @@ export default function Main() {
     }),
   );
 
+  const isSavedBridge = useRef(
+    createBridge({
+      status: true,
+      is_fresh: false, // To prevent setting status to false if loading new drawing.
+    }),
+  );
+
   const [nameDrawingPopUp, setNameDrawingPopUp] = useState(false);
+  const [notSavedPopUp, setNotSavedPopUp] = useState(false);
+  const [drawingName, setDrawingName] = useState(""); // used only for passing the drawing name to download in the not saved pop up.
 
   useEffect(() => {
     return () => {};
@@ -54,19 +65,45 @@ export default function Main() {
           drawingBridge={drawingBridge}
           cameraBridge={cameraBridge}
           setNameDrawingPopUp={setNameDrawingPopUp}
+          isSavedBridge={isSavedBridge}
         />
       ) : null}
+
+      <div className={styles.header}>
+        <Header drawingBridge={drawingBridge} />
+      </div>
+
+      {notSavedPopUp ? (
+        <NotSavedPopUp
+          setNotSavedPopUp={setNotSavedPopUp}
+          drawingBridge={drawingBridge}
+          cameraBridge={cameraBridge}
+          isSavedBridge={isSavedBridge}
+          drawingName={drawingName}
+        />
+      ) : null}
+
       <div className={styles.workArea}>
         <Canvas
           drawingBridge={drawingBridge}
           lineSettingsBridge={lineSettingsBridge}
           cameraBridge={cameraBridge}
+          isSavedBridge={isSavedBridge}
           nameDrawingPopUp={nameDrawingPopUp}
           setNameDrawingPopUp={setNameDrawingPopUp}
         />
       </div>
+
       <div className={styles.sidebar}>
-        <Sidebar lineSettingsBridge={lineSettingsBridge} />
+        <Sidebar
+          drawingBridge={drawingBridge}
+          cameraBridge={cameraBridge}
+          lineSettingsBridge={lineSettingsBridge}
+          isSavedBridge={isSavedBridge}
+          setNotSavedPopUp={setNotSavedPopUp}
+          setNameDrawingPopUp={setNameDrawingPopUp}
+          setDrawingName={setDrawingName}
+        />
       </div>
     </div>
   );

@@ -5,16 +5,27 @@
   z-index: -1;
 }
 
-.workArea {
+.header {
   position: fixed;
   top: 0;
+  left: 0;
+  z-index: 3;
+  background-color: #3d3d3d;
+  color: #ffffff;
+  width: 100vw;
+  height: 40px;
+}
+
+.workArea {
+  position: fixed;
+  top: 40px;
   left: 0;
   z-index: 1;
 }
 
 .sidebar {
   position: fixed;
-  top: 0;
+  top: 40px;
   left: 0;
   z-index: 2;
 }
