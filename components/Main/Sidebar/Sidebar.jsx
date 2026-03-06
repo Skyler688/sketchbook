@@ -14,12 +14,13 @@ import { useRouter } from "next/navigation";
 
 export default function Sidebar({
   drawingBridge,
-  cameraBridge,
-  lineSettingsBridge,
   isSavedBridge,
   setNotSavedPopUp,
-  setNameDrawingPopUp,
+  namePopUp,
+  setNamePopUp,
   setDrawingName,
+  setIsNew,
+  downloadingBridge,
 }) {
   const router = useRouter();
 
@@ -154,17 +155,17 @@ export default function Sidebar({
         }}
         className={styles.subMenu}
       >
-        {subMenu === "tools" && (
-          <ToolsSubmenu lineSettingsBridge={lineSettingsBridge} />
-        )}
+        {subMenu === "tools" && <ToolsSubmenu drawingBridge={drawingBridge} />}
         {subMenu === "files" && (
           <FileSubmenu
             drawingBridge={drawingBridge}
-            cameraBridge={cameraBridge}
             isSavedBridge={isSavedBridge}
             setNotSavedPopUp={setNotSavedPopUp}
-            setNameDrawingPopUp={setNameDrawingPopUp}
+            namePopUp={namePopUp}
+            setNamePopUp={setNamePopUp}
             setDrawingName={setDrawingName}
+            setIsNew={setIsNew}
+            downloadingBridge={downloadingBridge}
           />
         )}
 

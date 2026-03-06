@@ -4,31 +4,41 @@ import styles from "./DrawingNamePopUp.module.css";
 
 import { useRef, useState } from "react";
 
-import { saveDrawing } from "../../../lib/drawing_requests";
+import { saveDrawing } from "../../../../../../lib/drawing_requests";
+import { resetDrawing } from "../../../../../../lib/drawing";
 
 export default function DrawingNamePopUp({
   drawingBridge,
-  cameraBridge,
-  setNameDrawingPopUp,
+  setNamePopUp,
   isSavedBridge,
 }) {
   const drawing_bridge = drawingBridge.current;
-  const camera_bridge = cameraBridge.current;
   const is_saved_bridge = isSavedBridge.current;
 
   const [warning, setWarning] = useState("");
   const [drawingName, setDrawingName] = useState("");
 
   async function save() {
+    const og_name = drawing_bridge.get().name;
+
+    resetDrawing(drawing_bridge);
+
     drawing_bridge.mutate((data) => {
       data.name = drawingName;
     });
 
-    const result = await saveDrawing(drawing_bridge, camera_bridge);
+    const result = await saveDrawing(drawing_bridge);
 
+    // If save failed
     if (!result) {
       // Tell user save failed.
       setWarning("Error, failed to save drawing :(");
+
+      // Reset name back to original name.
+      drawing_bridge.mutate((data) => {
+        data.name = og_name;
+      });
+
       return;
     }
 
@@ -36,13 +46,13 @@ export default function DrawingNamePopUp({
       data.status = true;
     });
 
-    setNameDrawingPopUp(false);
+    setNamePopUp(false);
   }
 
   return (
     <div className={styles.modalOverlay}>
       <div className={styles.modal}>
-        <h2 className={styles.title}>Current drawing not named</h2>
+        <h2 className={styles.title}>New Drawing</h2>
 
         <p className={styles.text}>Please enter a name for this drawing.</p>
 
@@ -61,7 +71,7 @@ export default function DrawingNamePopUp({
           <button
             className={`${styles.btn} ${styles.btnCancel}`}
             onClick={() => {
-              setNameDrawingPopUp(false);
+              setNamePopUp(false);
             }}
           >
             Cancel
@@ -74,7 +84,7 @@ export default function DrawingNamePopUp({
             }}
             disabled={drawingName === ""}
           >
-            Save
+            Create
           </button>
         </div>
 

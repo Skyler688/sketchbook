@@ -32,6 +32,13 @@
   color: #c6c6c6;
 }
 
+.loading {
+  color: #858585;
+  text-align: center;
+  font-size: 15px;
+  margin-top: 20px;
+}
+
 .fileList {
   flex: 1;
   overflow-y: auto;

@@ -5,36 +5,41 @@ import {
   downloadDrawing,
 } from "../../../../../lib/drawing_requests";
 
+import {
+  loadDrawing,
+  rerender,
+  storeDrawing,
+} from "../../../../../lib/drawing";
+
 import { IoAddCircleOutline } from "react-icons/io5";
 
 import { useEffect, useState } from "react";
 import styles from "./FileSubMenu.module.css";
 
+import DrawingNamePopUp from "./DrawingNamePopUp/DrawingNamePopUp";
+
 export default function FileSubmenu({
   drawingBridge,
-  cameraBridge,
   isSavedBridge,
   setNotSavedPopUp,
-  setNameDrawingPopUp,
+  namePopUp,
+  setNamePopUp,
   setDrawingName,
+  setIsNew,
+  downloadingBridge,
 }) {
   const drawing_bridge = drawingBridge.current;
-  const camera_bridge = cameraBridge.current;
   const is_saved_bridge = isSavedBridge.current;
+  const downloading_bridge = downloadingBridge.current;
 
-  const [searchTerm, setSearchTerm] = useState("");
+  //   const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
   const [drawings, setDrawings] = useState([]);
   const [currentDrawing, setCurrentDrawing] = useState(
     drawing_bridge.get().name,
   );
 
-  async function loadDrawing(drawing_name) {
-    // Check if current drawing is named
-    if (drawing_bridge.get().name === "") {
-      setNameDrawingPopUp(true);
-      return;
-    }
-
+  async function getDrawing(drawing_name) {
     // Check if current drawing is saved, if not display popup
     if (!is_saved_bridge.get().status) {
       setDrawingName(drawing_name); // Used to pass the drawing name to the popup.
@@ -42,65 +47,60 @@ export default function FileSubmenu({
       return;
     }
 
-    is_saved_bridge.mutate((data) => {
+    // Disabling the events in the Canvas component
+    downloading_bridge.mutate((data) => {
       data.status = true;
-      data.is_fresh = true;
     });
 
-    if (!downloadDrawing(drawing_bridge, camera_bridge, drawing_name)) {
-      // Set warning
+    const prev_line_count = drawing_bridge.get().lines.length;
+
+    console.log("Before Download->", drawing_bridge.get());
+    // Downloading the drawing
+    const result = await downloadDrawing(drawing_bridge, drawing_name);
+
+    if (!result) {
+      // TODO -> Set warning
+      console.error("Failed to download the drawing file");
+      downloading_bridge.mutate((data) => {
+        data.status = false;
+      });
       return;
     }
 
-    // Mutate the drawing data triggering a rerender and should display the new loaded drawing.
+    console.log("After Download->", drawing_bridge.get());
+    // Store the new drawing in local storage.
+    storeDrawing(drawing_bridge, prev_line_count);
+
+    // Load from local storage
+    loadDrawing(drawing_bridge);
+
+    // Set is saved to true so no pop up happens unless a modification is made.
+    is_saved_bridge.mutate((data) => {
+      data.status = true;
+    });
+
+    // Resume the events in the Canvas component, also note that the Canvas useEffect will rerender the drawing when this state is changed.
+    downloading_bridge.mutate((data) => {
+      data.status = false;
+    });
   }
 
   function createNewDrawing() {
-    // Check if current drawing is named
-    if (drawing_bridge.get().name === "") {
-      setNameDrawingPopUp(true);
-      return;
-    }
-
-    // Check if current drawing is saved, if not display popup
-    if (!is_saved_bridge.get().status) {
-      setDrawingName(""); // If pass an empty string the pop up will not download a drawing, so a new blank one can be created.
+    if (is_saved_bridge.get().status) {
+      setNamePopUp(true);
+    } else {
+      setIsNew(true);
       setNotSavedPopUp(true);
-      return;
     }
-
-    const lines = drawing_bridge.get().lines.length;
-
-    for (let i = 0; i < lines; i++) {
-      localStorage.removeItem(`line_${i}`);
-    }
-
-    localStorage.setItem("drawing_name", "");
-
-    drawing_bridge.mutate((data) => {
-      data.lines = [];
-      data.redo_stack = [];
-      data.name = "";
-    });
-
-    camera_bridge.mutate((data) => {
-      data.x = 0;
-      data.y = 0;
-      data.scale = 1.0;
-      data.active = false;
-    });
   }
 
   useEffect(() => {
     async function getDrawingList() {
       const drawing_list = await fetchDrawingList();
 
-      if (!drawing_list) {
-        // Display no drawings
-        return;
-      }
-
       setDrawings(drawing_list);
+
+      setLoading(false);
     }
 
     getDrawingList();
@@ -117,35 +117,38 @@ export default function FileSubmenu({
 
   return (
     <div className={styles.submenu}>
-      {/* <div className={styles.searchBar}>
-        <input
-          type="text"
-          placeholder="Search drawings..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+      {namePopUp ? (
+        <DrawingNamePopUp
+          drawingBridge={drawingBridge}
+          setNamePopUp={setNamePopUp}
+          isSavedBridge={isSavedBridge}
         />
-      </div> */}
+      ) : null}
 
       <h2 className={styles.title}>Drawings</h2>
 
-      <div className={styles.fileList}>
-        {drawings.map((drawing_name, index) => (
-          <button
-            key={index}
-            className={styles.fileItem}
-            onClick={(e) => {
-              loadDrawing(drawing_name);
-            }}
-            disabled={currentDrawing === drawing_name}
-          >
-            {drawing_name}
-          </button>
-        ))}
+      {loading ? (
+        <p className={styles.loading}>Loading...</p>
+      ) : (
+        <div className={styles.fileList}>
+          {drawings.map((drawing_name, index) => (
+            <button
+              key={index}
+              className={styles.fileItem}
+              onClick={(e) => {
+                getDrawing(drawing_name);
+              }}
+              disabled={currentDrawing === drawing_name}
+            >
+              {drawing_name}
+            </button>
+          ))}
 
-        <button className={styles.add} onClick={createNewDrawing}>
-          <IoAddCircleOutline />
-        </button>
-      </div>
+          <button className={styles.add} onClick={createNewDrawing}>
+            <IoAddCircleOutline />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
