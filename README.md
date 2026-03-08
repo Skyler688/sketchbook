@@ -9,7 +9,7 @@
 
 ## Overview
 
-This app is a simple white sketching app using the html canvas and appwrite as a backend service. Most all the core features are in place, excluding a way to delete drawings, and a undo redo macro. I feal the application is in a working state to be a "complete project" and further time will need to be invested in order to implement the further features i would like to add. The app in its current state is far from perfect or ideal but is a solid foundation to come back to and refine and build upon. Making a moveable, zoomable, and infanate canvas, proved a harder problem than initially expected, tacking a considerable amount of the projects time. Other than that the services and SDK provided by appwrite freed allot of development time, allowing me to pursue the infinate canvas idea.
+This app is a simple sketching app using the html canvas and appwrite as a backend service. Most all the core features are in place, excluding a way to delete drawings, and a undo redo macro. I feal the application is in a working state to be a "complete project" and further time will need to be invested in order to implement the further features i would like to add. The app in its current state is far from perfect or ideal but is a solid foundation to come back to and refine and build upon. Making a moveable, zoomable, and infanate canvas, proved a harder problem than initially expected, tacking a considerable amount of the projects time. Other than that the services and SDK provided by appwrite freed allot of development time, allowing me to pursue the infinate canvas idea.
 
 ### TODO
 
