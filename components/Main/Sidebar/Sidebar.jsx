@@ -3,15 +3,16 @@
 import FileSubmenu from "./SubMenu/FileSubMenu/FileSubMenu";
 import ToolsSubmenu from "./SubMenu/ToolsSubMenu/ToolsSubMenu";
 
-import { useState, useRef, useEffect } from "react";
 import styles from "./Sidebar.module.css";
-import { FiFile, FiUpload, FiSettings } from "react-icons/fi";
+import { FiFile, FiSettings } from "react-icons/fi";
 import { SlWrench } from "react-icons/sl";
 // import { FaRegUserCircle } from "react-icons/fa";
 import { TbLogout2 } from "react-icons/tb";
 
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
+import { resetDrawing } from "../../../lib/drawing";
 export default function Sidebar({
   drawingBridge,
   isSavedBridge,
@@ -92,6 +93,9 @@ export default function Sidebar({
       return;
     }
 
+    // Wiping local storage back to default. (To prevent bug if switching to different account on same browser)
+    resetDrawing(drawingBridge.current);
+
     router.push("/pages/login");
   }
 
@@ -140,7 +144,7 @@ export default function Sidebar({
             <button
               className={styles.toolButton}
               type="button"
-              onClick={() => logout()}
+              onClick={logout}
             >
               <TbLogout2 size={20} />
             </button>

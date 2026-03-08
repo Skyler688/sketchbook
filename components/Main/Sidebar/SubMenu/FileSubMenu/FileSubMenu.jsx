@@ -122,6 +122,8 @@ export default function FileSubmenu({
           drawingBridge={drawingBridge}
           setNamePopUp={setNamePopUp}
           isSavedBridge={isSavedBridge}
+          setDrawings={setDrawings}
+          downloadingBridge={downloadingBridge}
         />
       ) : null}
 

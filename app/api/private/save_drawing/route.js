@@ -22,6 +22,20 @@ export async function PUT(req) {
     const drawing_buffer = form_data.get("file");
     const drawing_name = form_data.get("name");
 
+    if (drawing_name === "" || !drawing_name) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Invalid drawing name" }),
+        { status: 400 },
+      );
+    }
+
+    if (!drawing_buffer) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Invalid drawing file" }),
+        { status: 400 },
+      );
+    }
+
     // First send request to database to determin if this is a create or update.
     const drawing_rows = await database.listRows({
       databaseId: database_id,
@@ -36,6 +50,12 @@ export async function PUT(req) {
 
     // If the drawing exist update the drawing file.
     if (drawing_rows.total > 0) {
+      // Log a warning if ever more than one copy of the row is found.
+      if (drawing_rows.total > 1) {
+        console.error(
+          `WARNING -> More than one row with same drawing and user found, USER_ID-> ${user_id}, DRAWING_ID-> ${drawing_row.rows[0].drawing_id}, TOTAL_FOUND-> ${drawing_row.total}`,
+        );
+      }
       const drawing_row = drawing_rows.rows[0];
 
       // Just incase the file gets deleted but the create fails.
@@ -58,35 +78,16 @@ export async function PUT(req) {
         throw new Error("Failed to update file");
       }
     } else {
-      // If not create the file.
-      const drawing_id = ID.unique();
-
-      const drawing_row = await database.createRow({
-        databaseId: database_id,
-        tableId: "drawings",
-        rowId: ID.unique(),
-        data: {
-          user: user_id,
-          drawing_name: drawing_name,
-          drawing_id: drawing_id,
-        },
-      });
-
-      if (!drawing_row.$id) {
-        return new Response(
-          JSON.stringify({ success: false, message: "Failed save drawing" }),
-          { status: 500 },
-        );
-      }
-
-      // Sending file to appwrite storage bucket. NOTE -> no file name needed just and id.
-      const result = await storage.createFile({
-        bucketId: storage_id,
-        fileId: drawing_id,
-        file: drawing_buffer,
-      });
-
-      console.log(result);
+      // If not found send back invalid request.
+      return new Response(
+        JSON.stringify(
+          {
+            success: false,
+            message: "Failed to save file, no file found",
+          },
+          { status: 400 },
+        ),
+      );
     }
 
     return new Response(JSON.stringify({ success: true }), { status: 200 });

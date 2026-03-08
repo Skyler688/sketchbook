@@ -4,16 +4,22 @@ import styles from "./DrawingNamePopUp.module.css";
 
 import { useRef, useState } from "react";
 
-import { saveDrawing } from "../../../../../../lib/drawing_requests";
+import {
+  createDrawing,
+  downloadDrawing,
+} from "../../../../../../lib/drawing_requests";
 import { resetDrawing } from "../../../../../../lib/drawing";
 
 export default function DrawingNamePopUp({
   drawingBridge,
   setNamePopUp,
   isSavedBridge,
+  setDrawings,
+  downloadingBridge,
 }) {
   const drawing_bridge = drawingBridge.current;
   const is_saved_bridge = isSavedBridge.current;
+  const downloading_bridge = downloadingBridge.current;
 
   const [warning, setWarning] = useState("");
   const [drawingName, setDrawingName] = useState("");
@@ -23,20 +29,28 @@ export default function DrawingNamePopUp({
 
     resetDrawing(drawing_bridge);
 
+    downloading_bridge.mutate((data) => {
+      data.status = true;
+    });
+
     drawing_bridge.mutate((data) => {
       data.name = drawingName;
     });
 
-    const result = await saveDrawing(drawing_bridge);
+    const result = await createDrawing(drawing_bridge);
 
     // If save failed
-    if (!result) {
+    if (result !== true) {
       // Tell user save failed.
-      setWarning("Error, failed to save drawing :(");
+      setWarning(result.message);
 
       // Reset name back to original name.
       drawing_bridge.mutate((data) => {
         data.name = og_name;
+      });
+
+      is_saved_bridge.mutate((data) => {
+        data.status = true;
       });
 
       return;
@@ -44,6 +58,14 @@ export default function DrawingNamePopUp({
 
     is_saved_bridge.mutate((data) => {
       data.status = true;
+    });
+
+    downloading_bridge.mutate((data) => {
+      data.status = false;
+    });
+
+    setDrawings((drawings) => {
+      return [...drawings, drawingName];
     });
 
     setNamePopUp(false);
