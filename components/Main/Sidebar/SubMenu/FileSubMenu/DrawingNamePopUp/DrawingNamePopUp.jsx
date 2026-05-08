@@ -2,12 +2,9 @@
 
 import styles from "./DrawingNamePopUp.module.css";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 
-import {
-    createDrawing,
-    downloadDrawing,
-} from "../../../../../../lib/drawing_requests";
+import { createDrawing } from "../../../../../../lib/drawing_requests";
 import { resetDrawing } from "../../../../../../lib/drawing/storage";
 
 export default function DrawingNamePopUp({

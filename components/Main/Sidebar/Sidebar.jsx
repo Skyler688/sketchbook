@@ -9,7 +9,7 @@ import { SlWrench } from "react-icons/sl";
 // import { FaRegUserCircle } from "react-icons/fa";
 import { TbLogout2 } from "react-icons/tb";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 import { resetDrawing } from "@/lib/drawing/storage";

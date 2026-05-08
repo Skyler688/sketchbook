@@ -6,7 +6,7 @@
 // or the "state_bridge" if shared with other components.
 
 import styles from "./Canvas.module.css";
-import { Rendering } from "@/lib/drawing/Rendering";
+import { Rendering } from "@/lib/drawing/rendering/Rendering";
 
 import { saveDrawing } from "../../../lib/drawing_requests";
 
@@ -39,23 +39,9 @@ export default function Canvas({
 
     const mousePosition = useRef({ x: 0, y: 0 });
 
-    const saveTimeout = useRef(null);
+    // const saveTimeout = useRef(null);
 
     const is_drawing = useRef(false);
-    // const lastPoint = useRef({ x: 0, y: 0 });
-
-    // NOTE -> This is used to find the center origin of the drawing.
-    // The canvas element uses x, y cords starting from the top left at (0, 0),
-    // this center offset is used to convert the lines origin points relative to the center,
-    // allowing for x, y in both directions. This allows drawings to be boundless with no page borders.
-    // const centerOffset = useRef({
-    //     x: 0,
-    //     y: 0,
-    // });
-
-    // const line = useRef({
-    //     points: [],
-    // });
 
     const localCanvasRef = useRef(null);
 
@@ -200,15 +186,17 @@ export default function Canvas({
 
     // Main component useEffect.
     useEffect(() => {
+        let resize_debounce;
+        let camera_save_debounce;
+
         if (showCanvas && rendering.current !== null) {
             // Initial load, size, and render.
             rendering.current.resizeCanvas();
             rendering.current.rerender();
 
-            let resizeDebounce;
             function handleResize() {
-                clearTimeout(resizeDebounce);
-                resizeDebounce = setTimeout(() => {
+                clearTimeout(resize_debounce);
+                resize_debounce = setTimeout(() => {
                     rendering.current.resizeCanvas();
 
                     rendering.current.rerender();
@@ -307,7 +295,7 @@ export default function Canvas({
                     initial_redraw = true;
                 }
 
-                clearTimeout(saveTimeout.current);
+                clearTimeout(camera_save_debounce);
 
                 if (
                     // If any of the cameras state has changed and is stable for 300 milliseconds
@@ -315,7 +303,7 @@ export default function Canvas({
                     last_camera_pos.y === data.camera.y ||
                     last_camera_pos.scale === data.camera.scale
                 ) {
-                    saveTimeout.current = setTimeout(() => {
+                    camera_save_debounce = setTimeout(() => {
                         console.log("saving camera");
 
                         localStorage.setItem(
@@ -372,12 +360,12 @@ export default function Canvas({
         rendering.current.drawLine(event);
     }
 
-    function stopDrawing() {
+    function stopDrawing(event) {
         is_drawing.current = false;
 
         if (!rendering.current) return;
 
-        rendering.current.drawLastPoint();
+        rendering.current.drawLastPoint(event);
     }
 
     return (
@@ -406,7 +394,7 @@ export default function Canvas({
                         } else if (leftClickDown.current) {
                             // If put in move mode while drawing a line.
                             if (is_drawing.current) {
-                                stopDrawing();
+                                stopDrawing(event);
                             }
 
                             const offset = {
@@ -436,7 +424,7 @@ export default function Canvas({
                     }}
                     onMouseUp={(event) => {
                         if (!moveMode.current) {
-                            stopDrawing();
+                            stopDrawing(event);
                         }
                         if (event.button === 0) {
                             leftClickDown.current = false;
@@ -444,9 +432,8 @@ export default function Canvas({
                         }
                     }}
                     onMouseLeave={(event) => {
-                        stopDrawing();
+                        stopDrawing(event);
 
-                        // moveMode.current = false;
                         leftClickDown.current = false;
                         lastMovePos.current.is_captured = false;
                     }}
