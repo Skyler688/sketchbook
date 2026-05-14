@@ -7,27 +7,27 @@
 
 import styles from "./Canvas.module.css";
 import { Rendering } from "@/lib/drawing/rendering/Rendering";
-
-import { saveDrawing } from "../../../lib/drawing_requests";
+import { storeLine } from "@/lib/drawing/storage";
+// import { saveDrawing } from "../../../lib/drawing_requests";
 
 import { useRef, useEffect, useState } from "react";
 
 import { FiFile } from "react-icons/fi";
 
 export default function Canvas({
-    drawingBridge,
-    isSavedBridge,
+    drawingRef,
+    // isSavedBridge,
     namePopUp,
     notSavedPopUp,
-    downloadingBridge,
+    // downloadingBridge,
 }) {
     // ----------------------- State bridges ----------------------------
-    const drawing_bridge = drawingBridge.current;
-    const is_saved_bridge = isSavedBridge.current;
-    const downloading_bridge = downloadingBridge.current;
+    const drawing = drawingRef.current;
+    // const is_saved_bridge = isSavedBridge.current;
+    // const downloading_bridge = downloadingBridge.current;
 
     const [showCanvas, setShowCanvas] = useState(
-        drawing_bridge.get().name === "" ? false : true,
+        drawing.drawing_bridge.get().name === "" ? false : true,
     );
 
     const amountOfLines = useRef(0);
@@ -49,140 +49,138 @@ export default function Canvas({
 
     useEffect(() => {
         if (!rendering.current && localCanvasRef.current !== null) {
-            rendering.current = new Rendering(
-                drawing_bridge,
-                localCanvasRef.current,
-            );
+            rendering.current = new Rendering(drawing, localCanvasRef.current);
         }
     }, [showCanvas]);
 
+    // MOOVING TO INPUT ENGINE.
     // Key events
-    useEffect(() => {
-        if (showCanvas) {
-            const canvas = localCanvasRef.current;
+    // useEffect(() => {
+    //     if (showCanvas) {
+    //         const canvas = localCanvasRef.current;
 
-            const handleKeyDown = (event) => {
-                if (namePopUp) return;
+    //         // const handleKeyDown = (event) => {
+    //         //     if (namePopUp) return;
 
-                const key = event.key;
-                console.log("Key Down-> ", key);
+    //         //     const key = event.key;
+    //         //     console.log("Key Down-> ", key);
 
-                if (key === "Shift") {
-                    // If held activate move/zoom mode
-                    drawing_bridge.mutate((data) => {
-                        data.camera.active = true;
-                    });
-                }
+    //         //     if (key === "Shift") {
+    //         //         // If held activate move/zoom mode
+    //         //         drawing_bridge.mutate((data) => {
+    //         //             data.camera.active = true;
+    //         //         });
+    //         //     }
 
-                if (key === "-") {
-                    drawing_bridge.mutate((data) => {
-                        if (data.camera.scale * 0.9 > 0.1) {
-                            data.camera.scale *= 0.9;
-                        } else {
-                            data.camera.scale = 0.1;
-                        }
-                    });
-                }
+    //         //     if (key === "-") {
+    //         //         drawing_bridge.mutate((data) => {
+    //         //             if (data.camera.scale * 0.9 > 0.1) {
+    //         //                 data.camera.scale *= 0.9;
+    //         //             } else {
+    //         //                 data.camera.scale = 0.1;
+    //         //             }
+    //         //         });
+    //         //     }
 
-                if (key === "=" || key === "+") {
-                    drawing_bridge.mutate((data) => {
-                        if (data.camera.scale * 1.1 < 2.0) {
-                            data.camera.scale *= 1.1;
-                        } else {
-                            data.camera.scale = 2.0;
-                        }
-                    });
-                }
-            };
+    //         //     if (key === "=" || key === "+") {
+    //         //         drawing_bridge.mutate((data) => {
+    //         //             if (data.camera.scale * 1.1 < 2.0) {
+    //         //                 data.camera.scale *= 1.1;
+    //         //             } else {
+    //         //                 data.camera.scale = 2.0;
+    //         //             }
+    //         //         });
+    //         //     }
+    //         // };
 
-            const handleKeyUp = async (event) => {
-                if (namePopUp) return;
+    //         // const handleKeyUp = async (event) => {
+    //         //     if (namePopUp) return;
 
-                const key = event.key;
-                console.log("Key Up-> ", key);
+    //         //     const key = event.key;
+    //         //     console.log("Key Up-> ", key);
 
-                if (key === "Shift") {
-                    // Remove move/zoom mode
-                    drawing_bridge.mutate((data) => {
-                        data.camera.active = false;
-                    });
-                }
+    //         //     if (key === "Shift") {
+    //         //         // Remove move/zoom mode
+    //         //         drawing_bridge.mutate((data) => {
+    //         //             data.camera.active = false;
+    //         //         });
+    //         //     }
 
-                if (key === "s") {
-                    if (await saveDrawing(drawing_bridge)) {
-                        is_saved_bridge.mutate((data) => {
-                            data.status = true;
-                        });
-                    } else {
-                        // TODO -> ADD WARNING THAT SAVE FAILED
-                    }
-                }
-            };
+    //         //     if (key === "s") {
+    //         //         if (await saveDrawing(drawing_bridge)) {
+    //         //             is_saved_bridge.mutate((data) => {
+    //         //                 data.status = true;
+    //         //             });
+    //         //         } else {
+    //         //             // TODO -> ADD WARNING THAT SAVE FAILED
+    //         //         }
+    //         //     }
+    //         // };
 
-            let delta = 0;
-            function handleZoom(event) {
-                if (!moveMode.current) return; // If shift is held.
+    //         let delta = 0;
+    //         function handleZoom(event) {
+    //             if (!moveMode.current) return; // If shift is held.
 
-                event.preventDefault(); // Disable normal page scrolling.
+    //             event.preventDefault(); // Disable normal page scrolling.
 
-                drawing_bridge.mutate((data) => {
-                    let scale = data.camera.scale;
+    //             drawing_bridge.mutate((data) => {
+    //                 let scale = data.camera.scale;
 
-                    const scroll_amount =
-                        Math.abs(event.deltaY) > Math.abs(event.deltaX)
-                            ? event.deltaY
-                            : event.deltaX;
+    //                 const scroll_amount =
+    //                     Math.abs(event.deltaY) > Math.abs(event.deltaX)
+    //                         ? event.deltaY
+    //                         : event.deltaX;
 
-                    // If the direction of the scroll is changed reset the delta.
-                    if (
-                        (scroll_amount > 0 && delta < 0) ||
-                        (scroll_amount < 0 && delta > 0)
-                    ) {
-                        delta = 0;
-                    }
+    //                 // If the direction of the scroll is changed reset the delta.
+    //                 if (
+    //                     (scroll_amount > 0 && delta < 0) ||
+    //                     (scroll_amount < 0 && delta > 0)
+    //                 ) {
+    //                     delta = 0;
+    //                 }
 
-                    delta += scroll_amount;
+    //                 delta += scroll_amount;
 
-                    if (delta > 10) {
-                        scale *= 1.1;
-                        delta = 0;
-                    } else if (delta < -10) {
-                        scale *= 0.9;
-                        delta = 0;
-                    }
+    //                 if (delta > 10) {
+    //                     scale *= 1.1;
+    //                     delta = 0;
+    //                 } else if (delta < -10) {
+    //                     scale *= 0.9;
+    //                     delta = 0;
+    //                 }
 
-                    if (scale < 0.1) {
-                        scale = 0.1;
-                    } else if (scale > 2.0) {
-                        scale = 2.0;
-                    }
+    //                 if (scale < 0.1) {
+    //                     scale = 0.1;
+    //                 } else if (scale > 2.0) {
+    //                     scale = 2.0;
+    //                 }
 
-                    data.camera.scale = scale;
-                });
-            }
+    //                 data.camera.scale = scale;
+    //             });
+    //         }
 
-            // ---------------------- Events ----------------------
-            window.addEventListener("keydown", handleKeyDown);
-            window.addEventListener("keyup", handleKeyUp);
-            canvas.addEventListener("wheel", handleZoom, { passive: false });
+    //         // ---------------------- Events ----------------------
+    //         window.addEventListener("keydown", handleKeyDown);
+    //         window.addEventListener("keyup", handleKeyUp);
+    //         canvas.addEventListener("wheel", handleZoom, { passive: false });
 
-            return () => {
-                window.removeEventListener("keydown", handleKeyDown);
-                window.removeEventListener("keyup", handleKeyUp);
-                canvas.removeEventListener("wheel", handleZoom);
-            };
-        } else {
-            const downloaded_listener = downloading_bridge.listen((data) => {
-                if (!data.status) {
-                    setShowCanvas(true);
-                }
-            });
+    //         return () => {
+    //             window.removeEventListener("keydown", handleKeyDown);
+    //             window.removeEventListener("keyup", handleKeyUp);
+    //             canvas.removeEventListener("wheel", handleZoom);
+    //         };
+    //     } else {
+    //         const downloaded_listener = downloading_bridge.listen((data) => {
+    //             if (!data.status) {
+    //                 setShowCanvas(true);
+    //             }
+    //         });
 
-            return () => {
-                downloaded_listener();
-            };
-        }
-    }, [showCanvas, namePopUp, notSavedPopUp]); // To disable the key events during a pop up, otherwise the key presses will remain active.
+    //         return () => {
+    //             downloaded_listener();
+    //         };
+    //     }
+    // }, [showCanvas, namePopUp, notSavedPopUp]); // To disable the key events during a pop up, otherwise the key presses will remain active.
 
     // Main component useEffect.
     useEffect(() => {
@@ -207,129 +205,142 @@ export default function Canvas({
             window.addEventListener("resize", handleResize);
 
             // ************* For drawing_listener bellow *******************
-            amountOfLines.current = drawing_bridge.get().lines.length;
-            let last_drawing_name = drawing_bridge.get().name; // To track name changes.
-            let last_scale = drawing_bridge.get().camera.scale; // To track scale changes.
+            amountOfLines.current = drawing.drawing_bridge.get().lines.length;
+            let last_drawing_name = drawing.drawing_bridge.get().name; // To track name changes.
+            let last_scale = drawing.camera_bridge.get().scale; // To track scale changes.
             let last_mouse_pos = mousePosition.current; // To track mouse movement
             let initial_redraw = false;
             const last_camera_pos = {
-                x: drawing_bridge.get().camera.x,
-                y: drawing_bridge.get().camera.y,
-                scale: drawing_bridge.get().camera.scale,
+                x: drawing.camera_bridge.get().x,
+                y: drawing.camera_bridge.get().y,
+                scale: drawing.camera_bridge.get().scale,
             };
             // **************************************************************
 
             // If the download status is changed update the save conditions with the new drawings state.
-            const download_listener = downloading_bridge.listen((data) => {
-                if (!data.status) {
-                    const drawing_b = drawing_bridge.get();
+            const download_listener = drawing.network_status_bridge.listen(
+                (network_status) => {
+                    if (!network_status.downloading) {
+                        const drawing_b = drawing.drawing_bridge.get();
+                        const camera_b = drawing.camera_bridge.get();
 
-                    amountOfLines.current = drawing_b.lines.length;
-                    last_drawing_name = drawing_b.name; // To track name changes.
-                    last_scale = drawing_b.camera.scale; // To track scale changes.
-                    last_mouse_pos = mousePosition.current; // To track mouse movement
-                    last_camera_pos.x = drawing_b.camera.x;
-                    last_camera_pos.y = drawing_b.camera.y;
-                    last_camera_pos.scale = drawing_b.camera.scale;
+                        amountOfLines.current = drawing_b.lines.length;
+                        last_drawing_name = drawing_b.name; // To track name changes.
+                        last_scale = camera_b.scale; // To track scale changes.
+                        last_mouse_pos = mousePosition.current; // To track mouse movement
+                        last_camera_pos.x = camera_b.x;
+                        last_camera_pos.y = camera_b.y;
+                        last_camera_pos.scale = camera_b.scale;
 
-                    rendering.current.rerender();
-                }
-            });
+                        rendering.current.rerender();
+                    }
+                },
+            );
 
-            const drawing_listener = drawing_bridge.listen((data) => {
-                // If downloading don't run event handlers.
-                if (downloading_bridge.get().status) return;
+            const drawing_listener = drawing.drawing_bridge.listen(
+                (drawing_bridge) => {
+                    if (drawing.network_status_bridge.get().downloading) return;
 
-                // Save each new line to local storage as soon as it is created.
-                if (amountOfLines.current < data.lines.length) {
-                    console.log("Saving new line...");
+                    // Save each new line to local storage as soon as it is created.
+                    if (amountOfLines.current < drawing_bridge.lines.length) {
+                        console.log("Saving new line...");
 
-                    is_saved_bridge.mutate((data) => {
-                        data.status = false;
-                    });
-
-                    const lines_to_save =
-                        data.lines.length - amountOfLines.current;
-
-                    for (let i = 0; i < lines_to_save; i++) {
-                        const line_index =
-                            i + data.lines.length - lines_to_save;
-                        localStorage.setItem(
-                            `line_${line_index}`,
-                            JSON.stringify(data.lines[line_index]),
+                        drawing.network_status_bridge.mutate(
+                            (network_status) => {
+                                network_status.is_saved = false;
+                            },
                         );
+
+                        const lines_to_save =
+                            drawing_bridge.lines.length - amountOfLines.current;
+
+                        for (let i = 0; i < lines_to_save; i++) {
+                            const line_index =
+                                i + drawing_bridge.lines.length - lines_to_save;
+                            storeLine(drawing, line_index);
+                        }
+
+                        amountOfLines.current = drawing_bridge.lines.length;
                     }
 
-                    amountOfLines.current = data.lines.length;
-                }
-
-                // If the name is updated, save the new name.
-                if (last_drawing_name !== data.name) {
-                    console.log("Saving drawing name");
-
-                    localStorage.setItem("drawing_name", data.name);
-
-                    last_drawing_name = data.name;
-                }
-
-                // Camera
-                if (data.camera.active) {
-                    moveMode.current = true;
-                } else {
-                    moveMode.current = false;
-                }
-
-                const currentPos = mousePosition.current;
-
-                // Only redrawing the canvas if moved over 20px to avoid lag, if moving the mouse fast there is still a bit of lag but may be unavoidable with cpu rendering.
-                if (
-                    rendering.current.distance(last_mouse_pos, currentPos) >
-                        20 ||
-                    last_scale !== data.camera.scale ||
-                    !initial_redraw
-                ) {
-                    rendering.current.rerender();
-
-                    last_mouse_pos = currentPos;
-                    last_scale = data.camera.scale;
-                    initial_redraw = true;
-                }
-
-                clearTimeout(camera_save_debounce);
-
-                if (
-                    // If any of the cameras state has changed and is stable for 300 milliseconds
-                    last_camera_pos.x === data.camera.x ||
-                    last_camera_pos.y === data.camera.y ||
-                    last_camera_pos.scale === data.camera.scale
-                ) {
-                    camera_save_debounce = setTimeout(() => {
-                        console.log("saving camera");
+                    // If the name is updated, save the new name.
+                    if (last_drawing_name !== drawing_bridge.name) {
+                        console.log("Saving drawing name");
 
                         localStorage.setItem(
-                            "camera",
-                            JSON.stringify(data.camera),
+                            "drawing_name",
+                            drawing_bridge.name,
                         );
-                    }, 300);
-                }
 
-                last_camera_pos.x = data.camera.x;
-                last_camera_pos.y = data.camera.y;
-                last_camera_pos.scale = data.camera.scale;
-            });
+                        last_drawing_name = drawing_bridge.name;
+                    }
+                },
+            );
+
+            // CHANGE -> MAKE THE CAMERA RERENDER TRIGGERS TIME BASED INSTEAD OF DISTANCE.
+            const camera_listener = drawing.camera_bridge.listen(
+                (camera_bridge) => {
+                    if (camera_bridge.active) {
+                        moveMode.current = true;
+                    } else {
+                        moveMode.current = false;
+                    }
+
+                    const currentPos = mousePosition.current;
+
+                    // Only redrawing the canvas if moved over 20px to avoid lag, if moving the mouse fast there is still a bit of lag but may be unavoidable with cpu rendering.
+                    if (
+                        rendering.current.distance(last_mouse_pos, currentPos) >
+                            20 ||
+                        last_scale !== camera_bridge.scale ||
+                        !initial_redraw
+                    ) {
+                        rendering.current.rerender();
+
+                        last_mouse_pos = currentPos;
+                        last_scale = camera_bridge.scale;
+                        initial_redraw = true;
+                    }
+
+                    clearTimeout(camera_save_debounce);
+
+                    if (
+                        // If any of the cameras state has changed and is stable for 300 milliseconds
+                        last_camera_pos.x === camera_bridge.x ||
+                        last_camera_pos.y === camera_bridge.y ||
+                        last_camera_pos.scale === camera_bridge.scale
+                    ) {
+                        camera_save_debounce = setTimeout(() => {
+                            console.log("saving camera");
+
+                            localStorage.setItem(
+                                "camera",
+                                JSON.stringify(camera_bridge),
+                            );
+                        }, 300);
+                    }
+
+                    last_camera_pos.x = camera_bridge.x;
+                    last_camera_pos.y = camera_bridge.y;
+                    last_camera_pos.scale = camera_bridge.scale;
+                },
+            );
 
             // Cleaning up the events, (preventing multiple copies every time the component is rerendered)
             return () => {
                 window.removeEventListener("resize", handleResize);
                 download_listener();
                 drawing_listener(); // Deleting the "state_bridge" event listener.
+                camera_listener();
             };
         } else {
-            const downloaded_listener = downloading_bridge.listen((data) => {
-                if (!data.status) {
-                    setShowCanvas(true);
-                }
-            });
+            const downloaded_listener = drawing.network_status_bridge.listen(
+                (network_status) => {
+                    if (!network_status.downloading) {
+                        setShowCanvas(true);
+                    }
+                },
+            );
 
             return () => {
                 downloaded_listener();
@@ -404,16 +415,22 @@ export default function Canvas({
 
                             // Mutate the cameras position.
                             if (lastMovePos.current.is_captured) {
-                                drawing_bridge.mutate((data) => {
-                                    const dx = offset.x - lastMovePos.current.x;
-                                    const dy = offset.y - lastMovePos.current.y;
+                                drawing.camera_bridge.mutate(
+                                    (camera_bridge) => {
+                                        const dx =
+                                            offset.x - lastMovePos.current.x;
+                                        const dy =
+                                            offset.y - lastMovePos.current.y;
 
-                                    data.camera.x += dx / data.camera.scale;
-                                    data.camera.y += dy / data.camera.scale;
+                                        camera_bridge.camera.x +=
+                                            dx / camera_bridge.camera.scale;
+                                        camera_bridge.camera.y +=
+                                            dy / camera_bridge.camera.scale;
 
-                                    lastMovePos.current.x = offset.x;
-                                    lastMovePos.current.y = offset.y;
-                                });
+                                        lastMovePos.current.x = offset.x;
+                                        lastMovePos.current.y = offset.y;
+                                    },
+                                );
                             } else {
                                 lastMovePos.current.x = offset.x;
                                 lastMovePos.current.y = offset.y;

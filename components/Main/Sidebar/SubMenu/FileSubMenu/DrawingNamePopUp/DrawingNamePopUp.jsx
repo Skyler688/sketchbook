@@ -8,57 +8,47 @@ import { createDrawing } from "../../../../../../lib/drawing_requests";
 import { resetDrawing } from "../../../../../../lib/drawing/storage";
 
 export default function DrawingNamePopUp({
-    drawingBridge,
+    drawingRef,
     setNamePopUp,
-    isSavedBridge,
     setDrawings,
-    downloadingBridge,
 }) {
-    const drawing_bridge = drawingBridge.current;
-    const is_saved_bridge = isSavedBridge.current;
-    const downloading_bridge = downloadingBridge.current;
+    const drawing = drawingRef.current;
 
     const [warning, setWarning] = useState("");
     const [drawingName, setDrawingName] = useState("");
 
     async function save() {
-        const og_name = drawing_bridge.get().name;
+        const og_name = drawing.drawing_bridge.get().name;
 
-        resetDrawing(drawing_bridge);
+        resetDrawing(drawing);
 
-        downloading_bridge.mutate((data) => {
-            data.status = true;
+        drawing.network_status_bridge.mutate((network_status) => {
+            network_status.downloading = true;
         });
 
-        drawing_bridge.mutate((data) => {
-            data.name = drawingName;
+        drawing.drawing_bridge.mutate((drawing_bridge) => {
+            drawing_bridge.name = drawingName;
         });
 
-        const result = await createDrawing(drawing_bridge);
+        const result = await createDrawing(drawing);
 
-        // If save failed
         if (result !== true) {
-            // Tell user save failed.
             setWarning(result.message);
 
-            // Reset name back to original name.
-            drawing_bridge.mutate((data) => {
-                data.name = og_name;
+            drawing.drawing_bridge.mutate((drawing_bridge) => {
+                drawing_bridge.name = og_name;
             });
 
-            is_saved_bridge.mutate((data) => {
-                data.status = true;
+            drawing.network_status_bridge.mutate((network_status) => {
+                network_status.is_saved = true;
             });
 
             return;
         }
 
-        is_saved_bridge.mutate((data) => {
-            data.status = true;
-        });
-
-        downloading_bridge.mutate((data) => {
-            data.status = false;
+        drawing.network_status_bridge.mutate((network_status) => {
+            network_status.is_saved = true;
+            network_status.downloading = false;
         });
 
         setDrawings((drawings) => {

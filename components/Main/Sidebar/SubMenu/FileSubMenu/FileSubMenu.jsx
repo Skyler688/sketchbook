@@ -1,12 +1,9 @@
 "use client";
 
-import {
-    fetchDrawingList,
-    downloadDrawing,
-} from "../../../../../lib/drawing_requests";
+import { fetchDrawingList, downloadDrawing } from "@/lib/drawing_requests";
 
 // import { rerender } from "@/lib/drawing/rendering";
-import { loadDrawing, storeDrawing } from "@/lib/drawing/storage";
+import { loadDrawing, storeDrawing, clearStorage } from "@/lib/drawing/storage";
 
 import { IoAddCircleOutline } from "react-icons/io5";
 
@@ -16,82 +13,73 @@ import styles from "./FileSubMenu.module.css";
 import DrawingNamePopUp from "./DrawingNamePopUp/DrawingNamePopUp";
 
 export default function FileSubmenu({
-    drawingBridge,
-    isSavedBridge,
+    drawingRef,
+    // isSavedBridge,
     setNotSavedPopUp,
     namePopUp,
     setNamePopUp,
     setDrawingName,
-    setIsNew,
-    downloadingBridge,
+    // setIsNew,
+    // downloadingBridge,
 }) {
-    const drawing_bridge = drawingBridge.current;
-    const is_saved_bridge = isSavedBridge.current;
-    const downloading_bridge = downloadingBridge.current;
+    const drawing = drawingRef.current;
 
     //   const [searchTerm, setSearchTerm] = useState("");
     const [loading, setLoading] = useState(true);
     const [drawings, setDrawings] = useState([]);
-    const [currentDrawing, setCurrentDrawing] = useState(
-        drawing_bridge.get().name,
-    );
+    const [currentDrawing, setCurrentDrawing] = useState("");
 
     async function getDrawing(drawing_name) {
-        // Check if current drawing is saved, if not display popup
-        if (!is_saved_bridge.get().status) {
-            setDrawingName(drawing_name); // Used to pass the drawing name to the popup.
+        if (!drawing.network_status_bridge.get().is_saved) {
+            setDrawingName(drawing_name);
             setNotSavedPopUp(true);
             return;
         }
 
-        // Disabling the events in the Canvas component
-        downloading_bridge.mutate((data) => {
-            data.status = true;
+        drawing.network_status_bridge.mutate((network_status) => {
+            network_status.downloading = true;
         });
 
-        const prev_line_count = drawing_bridge.get().lines.length;
+        const og_line_count = drawing.drawing_bridge.get().lines.length;
 
-        console.log("Before Download->", drawing_bridge.get());
-        // Downloading the drawing
-        const result = await downloadDrawing(drawing_bridge, drawing_name);
+        const result = await downloadDrawing(drawing, drawing_name);
 
         if (!result) {
             // TODO -> Set warning
-            console.error("Failed to download the drawing file");
-            downloading_bridge.mutate((data) => {
-                data.status = false;
+            console.error(
+                "Failed to download the drawing file, PLEASE ADD WARNING IN THE UI",
+            );
+            drawing.network_status_bridge.mutate((network_status) => {
+                network_status.downloading = false;
             });
+
             return;
         }
 
-        console.log("After Download->", drawing_bridge.get());
-        // Store the new drawing in local storage.
-        storeDrawing(drawing_bridge, prev_line_count);
+        console.log(drawing.drawing_bridge.get().name);
+        clearStorage(og_line_count);
+        console.log(drawing.drawing_bridge.get().name);
 
-        // Load from local storage
-        loadDrawing(drawing_bridge);
+        storeDrawing(drawing);
 
-        // Set is saved to true so no pop up happens unless a modification is made.
-        is_saved_bridge.mutate((data) => {
-            data.status = true;
-        });
-
-        // Resume the events in the Canvas component, also note that the Canvas useEffect will rerender the drawing when this state is changed.
-        downloading_bridge.mutate((data) => {
-            data.status = false;
+        drawing.network_status_bridge.mutate((network_status) => {
+            network_status.is_saved = true;
+            network_status.downloading = false;
         });
     }
 
     function createNewDrawing() {
-        if (is_saved_bridge.get().status) {
+        if (drawing.network_status_bridge.get().is_saved) {
             setNamePopUp(true);
         } else {
-            setIsNew(true);
+            // setIsNew(true);
             setNotSavedPopUp(true);
         }
     }
 
     useEffect(() => {
+        setCurrentDrawing(drawing.drawing_bridge.get().name);
+
         async function getDrawingList() {
             const drawing_list = await fetchDrawingList();
 
@@ -103,9 +91,11 @@ export default function FileSubmenu({
         getDrawingList();
 
         // events
-        const drawing_listener = drawing_bridge.listen((data) => {
-            setCurrentDrawing(data.name);
-        });
+        const drawing_listener = drawing.drawing_bridge.listen(
+            (drawing_bridge) => {
+                setCurrentDrawing(drawing_bridge.name);
+            },
+        );
 
         return () => {
             drawing_listener(); // deleting event listener to prevent multiple listeners on rerender. See /lib/state_bridge.js for more info.
@@ -116,11 +106,11 @@ export default function FileSubmenu({
         <div className={styles.submenu}>
             {namePopUp ? (
                 <DrawingNamePopUp
-                    drawingBridge={drawingBridge}
+                    drawingRef={drawingRef}
                     setNamePopUp={setNamePopUp}
-                    isSavedBridge={isSavedBridge}
+                    // isSavedBridge={isSavedBridge}
                     setDrawings={setDrawings}
-                    downloadingBridge={downloadingBridge}
+                    // downloadingBridge={downloadingBridge}
                 />
             ) : null}
 
@@ -134,7 +124,7 @@ export default function FileSubmenu({
                         <button
                             key={index}
                             className={styles.fileItem}
-                            onClick={(e) => {
+                            onClick={() => {
                                 getDrawing(drawing_name);
                             }}
                             disabled={currentDrawing === drawing_name}

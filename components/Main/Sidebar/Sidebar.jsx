@@ -14,14 +14,14 @@ import { useRouter } from "next/navigation";
 
 import { resetDrawing } from "@/lib/drawing/storage";
 export default function Sidebar({
-    drawingBridge,
-    isSavedBridge,
+    drawingRef,
+    // isSavedBridge,
     setNotSavedPopUp,
     namePopUp,
     setNamePopUp,
     setDrawingName,
-    setIsNew,
-    downloadingBridge,
+    // setIsNew,
+    // downloadingBridge,
 }) {
     const router = useRouter();
 
@@ -94,7 +94,7 @@ export default function Sidebar({
         }
 
         // Wiping local storage back to default. (To prevent bug if switching to different account on same browser)
-        resetDrawing(drawingBridge.current);
+        resetDrawing(drawingRef.current);
 
         router.push("/pages/login");
     }
@@ -163,18 +163,18 @@ export default function Sidebar({
                 className={styles.subMenu}
             >
                 {subMenu === "tools" && (
-                    <ToolsSubmenu drawingBridge={drawingBridge} />
+                    <ToolsSubmenu drawingRef={drawingRef} />
                 )}
                 {subMenu === "files" && (
                     <FileSubmenu
-                        drawingBridge={drawingBridge}
-                        isSavedBridge={isSavedBridge}
+                        drawingRef={drawingRef}
+                        // isSavedBridge={isSavedBridge}
                         setNotSavedPopUp={setNotSavedPopUp}
                         namePopUp={namePopUp}
                         setNamePopUp={setNamePopUp}
                         setDrawingName={setDrawingName}
-                        setIsNew={setIsNew}
-                        downloadingBridge={downloadingBridge}
+                        // setIsNew={setIsNew}
+                        // downloadingBridge={downloadingBridge}
                     />
                 )}
 

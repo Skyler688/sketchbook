@@ -19,49 +19,42 @@ import { loadDrawing } from "@/lib/drawing/storage";
 
 export default function Main() {
     // ------------------------------ Bridges ------------------------------
-    const drawingBridge = useRef(
-        createBridge({
+    const drawingRef = useRef({
+        drawing_bridge: createBridge({
             lines: [],
             redo_stack: [],
             old_line_count: 0, // Used to clear the old lines from local storage when loading in a new drawing.
             name: "",
-            camera: {
-                x: 0,
-                y: 0,
-                scale: 1.0,
-                active: false,
-            },
-            line_settings: {
-                width: 10,
-                color: "#ffffff",
-            },
         }),
-    );
-
-    const isSavedBridge = useRef(
-        createBridge({
-            status: true,
+        camera_bridge: createBridge({
+            x: 0,
+            y: 0,
+            scale: 1.0,
+            active: false,
         }),
-    );
-
-    const downloadingBridge = useRef(
-        createBridge({
-            status: false,
+        line_settings_bridge: createBridge({
+            width: 10,
+            color: "#ffffff",
         }),
-    );
+        network_status_bridge: createBridge({
+            is_saved: true,
+            downloading: false,
+        }),
+    });
 
-    //   const [isDownloading, setIsDownloading] = useState(false); // Used to disable the events in he canvas element while drawing download is in progress.
-
-    const [isNew, setIsNew] = useState(false);
+    // const [isNew, setIsNew] = useState(false);
     const [namePopUp, setNamePopUp] = useState(false);
     const [notSavedPopUp, setNotSavedPopUp] = useState(false);
     const [drawingName, setDrawingName] = useState(""); // used only for passing the drawing name to download in the not saved pop up.
 
     useEffect(() => {
-        loadDrawing(drawingBridge.current);
-        if (drawingBridge.current.get().name !== "") {
-            downloadingBridge.current.mutate((data) => {
-                data.status = false;
+        const drawing = drawingRef.current;
+
+        loadDrawing(drawing);
+
+        if (drawing.drawing_bridge.get().name !== "") {
+            drawing.network_status_bridge.mutate((network_status) => {
+                network_status.downloading = false;
             });
         }
         return () => {};
@@ -70,41 +63,37 @@ export default function Main() {
     return (
         <div className={styles.app}>
             <div className={styles.header}>
-                <Header drawingBridge={drawingBridge} />
+                <Header drawingRef={drawingRef} />
             </div>
 
             {notSavedPopUp ? (
                 <NotSavedPopUp
                     setNotSavedPopUp={setNotSavedPopUp}
-                    drawingBridge={drawingBridge}
-                    isSavedBridge={isSavedBridge}
-                    setNamePopUp={setNamePopUp}
-                    isNew={isNew}
+                    drawingRef={drawingRef}
                     drawingName={drawingName}
-                    downloadingBridge={downloadingBridge}
                 />
             ) : null}
 
             <div className={styles.workArea}>
                 <Canvas
-                    drawingBridge={drawingBridge}
-                    isSavedBridge={isSavedBridge}
+                    drawingRef={drawingRef}
+                    // isSavedBridge={isSavedBridge}
                     namePopUp={namePopUp}
                     notSavedPopUp={notSavedPopUp}
-                    downloadingBridge={downloadingBridge}
+                    // downloadingBridge={downloadingBridge}
                 />
             </div>
 
             <div className={styles.sidebar}>
                 <Sidebar
-                    drawingBridge={drawingBridge}
-                    isSavedBridge={isSavedBridge}
+                    drawingRef={drawingRef}
+                    // isSavedBridge={isSavedBridge}
                     setNotSavedPopUp={setNotSavedPopUp}
                     namePopUp={namePopUp}
                     setNamePopUp={setNamePopUp}
                     setDrawingName={setDrawingName}
-                    setIsNew={setIsNew}
-                    downloadingBridge={downloadingBridge}
+                    // setIsNew={setIsNew}
+                    // downloadingBridge={downloadingBridge}
                 />
             </div>
         </div>

@@ -3,45 +3,46 @@
 import { useEffect, useState } from "react";
 import styles from "./ToolsSubMenu.module.css";
 
-export default function ToolsSubmenu({ drawingBridge }) {
-    const drawing_bridge = drawingBridge.current;
+export default function ToolsSubmenu({ drawingRef }) {
+    const drawing = drawingRef.current;
 
-    const [lineWidth, setLineWidth] = useState(
-        drawing_bridge.get().line_settings.width,
-    );
-    const [lineColor, setLineColor] = useState(
-        drawing_bridge.get().line_settings.color,
-    );
+    const [lineWidth, setLineWidth] = useState(0);
+    const [lineColor, setLineColor] = useState("");
 
     useEffect(() => {
         let debounce_timer;
 
-        let old_line_settings = drawing_bridge.get().line_settings;
+        let old_line_settings = drawing.line_settings_bridge.get();
 
-        const drawing_listener = drawing_bridge.listen((data) => {
-            if (
-                old_line_settings.width === data.line_settings.width &&
-                old_line_settings.color === data.line_settings.color
-            ) {
-                return;
-            }
+        setLineWidth(old_line_settings.width);
+        setLineColor(old_line_settings.color);
 
-            clearTimeout(debounce_timer);
+        const settings_listener = drawing.line_settings_bridge.listen(
+            (line_settings) => {
+                if (
+                    old_line_settings.width === line_settings.width &&
+                    old_line_settings.color === line_settings.color
+                ) {
+                    return;
+                }
 
-            debounce_timer = setTimeout(() => {
-                console.log("Saving line settings...");
-                localStorage.setItem(
-                    "line_settings",
-                    JSON.stringify(data.lineSettings),
-                );
+                clearTimeout(debounce_timer);
 
-                old_line_settings = data.line_settings;
-            }, 300);
-        });
+                debounce_timer = setTimeout(() => {
+                    console.log("Saving line settings...");
+                    localStorage.setItem(
+                        "line_settings",
+                        JSON.stringify(line_settings),
+                    );
+
+                    old_line_settings = line_settings;
+                }, 300);
+            },
+        );
 
         return () => {
             clearTimeout(debounce_timer);
-            drawing_listener(); // clearing the event subscription.
+            settings_listener(); // clearing the event subscription.
         };
     }, []);
     return (
@@ -57,11 +58,13 @@ export default function ToolsSubmenu({ drawingBridge }) {
                         value={lineColor}
                         className={styles.colorInput}
                         onChange={(e) => {
-                            const new_color = e.target.value;
+                            const new_color = String(e.target.value);
 
-                            drawing_bridge.mutate((data) => {
-                                data.line_settings.color = new_color;
-                            });
+                            drawing.line_settings_bridge.mutate(
+                                (line_settings) => {
+                                    line_settings.color = new_color;
+                                },
+                            );
 
                             setLineColor(new_color);
                         }}
@@ -78,16 +81,18 @@ export default function ToolsSubmenu({ drawingBridge }) {
                         id="lineWidth"
                         min="1"
                         max="50"
-                        defaultValue={lineWidth}
+                        value={lineWidth}
                         className={styles.rangeInput}
                         onChange={(e) => {
-                            const width = Number(e.target.value);
+                            const new_width = Number(e.target.value);
 
-                            drawing_bridge.mutate((data) => {
-                                data.line_settings.width = width;
+                            drawing.line_settings_bridge.mutate(
+                                (line_settings) => {
+                                    line_settings.width = new_width;
+                                },
+                            );
 
-                                setLineWidth(width);
-                            });
+                            setLineWidth(new_width);
                         }}
                     />
                 </div>

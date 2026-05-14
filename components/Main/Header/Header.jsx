@@ -3,21 +3,24 @@
 import { useEffect, useState } from "react";
 import styles from "./Header.module.css";
 
-export default function Header({ drawingBridge }) {
-  const drawing_bridge = drawingBridge.current;
+export default function Header({ drawingRef }) {
+    const drawing = drawingRef.current;
 
-  const [drawingName, setDrawingName] = useState("Untitled");
+    const [drawingName, setDrawingName] = useState("Untitled");
 
-  useEffect(() => {
-    drawing_bridge.listen((data) => {
-      if (drawingName !== data.name && data.name !== "") {
-        setDrawingName(data.name);
-      }
-    });
-  }, []);
-  return (
-    <div className={styles.header}>
-      <h3 className={styles.drawingName}>{drawingName}</h3>
-    </div>
-  );
+    useEffect(() => {
+        drawing.drawing_bridge.listen((drawing_bridge) => {
+            if (
+                drawingName !== drawing_bridge.name &&
+                drawing_bridge.name !== ""
+            ) {
+                setDrawingName(drawing_bridge.name);
+            }
+        });
+    }, []);
+    return (
+        <div className={styles.header}>
+            <h3 className={styles.drawingName}>{drawingName}</h3>
+        </div>
+    );
 }

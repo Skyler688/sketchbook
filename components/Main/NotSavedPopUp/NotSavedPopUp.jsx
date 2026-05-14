@@ -4,67 +4,35 @@ import styles from "./NotSavedPopUp.module.css";
 
 import { useState } from "react";
 
-import { saveDrawing, downloadDrawing } from "../../../lib/drawing_requests";
-import { resetDrawing, storeDrawing } from "@/lib/drawing/storage";
+import { saveDrawing, downloadDrawing } from "@/lib/drawing_requests";
+import { storeDrawing, clearStorage } from "@/lib/drawing/storage";
 
 export default function NotSavedPopUp({
     setNotSavedPopUp,
-    drawingBridge,
-    isSavedBridge,
-    setNamePopUp,
-    isNew,
+    drawingRef,
     drawingName,
-    downloadingBridge,
 }) {
-    const drawing_bridge = drawingBridge.current;
-    const is_saved_bridge = isSavedBridge.current;
-    const downloading_bridge = downloadingBridge.current;
+    const drawing = drawingRef.current;
 
     const [warning, setWarning] = useState("");
 
-    async function save() {
-        if (!(await saveDrawing(drawing_bridge))) {
+    async function downloadWithSaving() {
+        if (!(await saveDrawing(drawing))) {
             setWarning("Error, failed to save drawing :(");
             return;
         }
 
-        downloading_bridge.mutate((data) => {
-            data.status = true;
-        });
-
-        const prev_line_count = drawing_bridge.get().lines.length;
-
-        const result = await downloadDrawing(drawing_bridge, drawingName);
-
-        if (!result) {
-            setWarning("Failed to download drawing :(");
-            downloading_bridge.mutate((data) => {
-                data.status = false;
-            });
-            return;
-        }
-
-        storeDrawing(drawing_bridge, prev_line_count);
-
-        is_saved_bridge.mutate((data) => {
-            data.status = true;
-        });
-
-        downloading_bridge.mutate((data) => {
-            data.status = false;
-        });
-
-        setNotSavedPopUp(false);
+        await download();
     }
 
-    async function dontSave() {
-        downloading_bridge.mutate((data) => {
-            data.status = true;
+    async function download() {
+        drawing.network_status_bridge.mutate((network_status) => {
+            network_status.downloading = true;
         });
 
-        const prev_line_count = drawing_bridge.get().lines.length;
+        const og_line_count = drawing.drawing_bridge.get().lines.length;
 
-        const result = await downloadDrawing(drawing_bridge, drawingName);
+        const result = await downloadDrawing(drawing, drawingName);
 
         if (!result) {
             setWarning("Failed to download drawing :(");
@@ -74,14 +42,13 @@ export default function NotSavedPopUp({
             return;
         }
 
-        storeDrawing(drawing_bridge, prev_line_count);
+        clearStorage(og_line_count);
 
-        is_saved_bridge.mutate((data) => {
-            data.status = true;
-        });
+        storeDrawing(drawing);
 
-        downloading_bridge.mutate((data) => {
-            data.status = false;
+        drawing.network_status_bridge.mutate((network_status) => {
+            network_status.is_saved = true;
+            network_status.downloading = false;
         });
 
         setNotSavedPopUp(false);
@@ -100,7 +67,7 @@ export default function NotSavedPopUp({
                     <button
                         className={`${styles.btn} ${styles.btnCancel}`}
                         onClick={() => {
-                            dontSave();
+                            download();
                         }}
                     >
                         No
@@ -108,8 +75,8 @@ export default function NotSavedPopUp({
 
                     <button
                         className={`${styles.btn} ${styles.btnSave}`}
-                        onClick={(e) => {
-                            save();
+                        onClick={() => {
+                            downloadWithSaving();
                         }}
                     >
                         Yes
