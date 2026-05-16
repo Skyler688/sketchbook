@@ -4,8 +4,8 @@ import styles from "./DrawingNamePopUp.module.css";
 
 import { useState } from "react";
 
-import { createDrawing } from "../../../../../../lib/drawing/api";
-import { resetDrawing } from "../../../../../../lib/drawing/storage";
+import { createDrawing } from "@/lib/client/api";
+import { resetDrawing } from "@/lib/client/storage";
 
 export default function DrawingNamePopUp({
     drawingRef,

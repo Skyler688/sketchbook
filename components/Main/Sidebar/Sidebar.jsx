@@ -12,16 +12,13 @@ import { TbLogout2 } from "react-icons/tb";
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
-import { resetDrawing } from "@/lib/drawing/storage";
+import { resetDrawing } from "@/lib/client/storage";
 export default function Sidebar({
     drawingRef,
-    // isSavedBridge,
     setNotSavedPopUp,
     namePopUp,
     setNamePopUp,
     setDrawingName,
-    // setIsNew,
-    // downloadingBridge,
 }) {
     const router = useRouter();
 

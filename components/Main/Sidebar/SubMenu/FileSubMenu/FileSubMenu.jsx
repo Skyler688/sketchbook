@@ -1,8 +1,8 @@
 "use client";
 
-import { fetchDrawingList, downloadDrawing } from "@/lib/drawing/api";
+import { fetchDrawingList, downloadDrawing } from "@/lib/client/api";
 
-import { storeDrawing, clearStorage } from "@/lib/drawing/storage";
+import { storeDrawing, clearStorage } from "@/lib/client/storage";
 
 import { IoAddCircleOutline } from "react-icons/io5";
 
@@ -13,17 +13,13 @@ import DrawingNamePopUp from "./DrawingNamePopUp/DrawingNamePopUp";
 
 export default function FileSubmenu({
     drawingRef,
-    // isSavedBridge,
     setNotSavedPopUp,
     namePopUp,
     setNamePopUp,
     setDrawingName,
-    // setIsNew,
-    // downloadingBridge,
 }) {
     const drawing = drawingRef.current;
 
-    //   const [searchTerm, setSearchTerm] = useState("");
     const [loading, setLoading] = useState(true);
     const [drawings, setDrawings] = useState([]);
     const [currentDrawing, setCurrentDrawing] = useState("");
@@ -39,7 +35,6 @@ export default function FileSubmenu({
             network_status.downloading = true;
         });
 
-        h;
         const og_line_count = drawing.drawing_bridge.get().lines.length;
 
         const result = await downloadDrawing(drawing, drawing_name);
@@ -98,7 +93,7 @@ export default function FileSubmenu({
         );
 
         return () => {
-            drawing_listener(); // deleting event listener to prevent multiple listeners on rerender. See /lib/state_bridge.js for more info.
+            drawing_listener();
         };
     }, []);
 
@@ -108,9 +103,7 @@ export default function FileSubmenu({
                 <DrawingNamePopUp
                     drawingRef={drawingRef}
                     setNamePopUp={setNamePopUp}
-                    // isSavedBridge={isSavedBridge}
                     setDrawings={setDrawings}
-                    // downloadingBridge={downloadingBridge}
                 />
             ) : null}
 

@@ -12,10 +12,10 @@ import Sidebar from "./Sidebar/Sidebar";
 import Canvas from "./Canvas/Canvas";
 import Header from "./Header/Header";
 
-import { createBridge } from "../../lib/state_bridge";
+import { createBridge } from "@/lib/client/state_bridge";
 
 import { useEffect, useRef, useState } from "react";
-import { loadDrawing } from "@/lib/drawing/storage";
+import { loadDrawing } from "@/lib/client/storage";
 
 export default function Main() {
     // ------------------------------ Bridges ------------------------------

@@ -7,9 +7,9 @@
 
 import styles from "./Canvas.module.css";
 
-import { Rendering } from "@/lib/drawing/rendering/Rendering";
-import { storeLine } from "@/lib/drawing/storage";
-import { handleKeyUp, handleKeyDown } from "@/lib/drawing/events/key_map";
+import { Rendering } from "@/lib/client/rendering/Rendering";
+import { storeLine } from "@/lib/client/storage";
+import { handleKeyUp, handleKeyDown } from "@/lib/client/events/key_map";
 // import { saveDrawing } from "../../../lib/drawing_requests";
 
 import { useRef, useEffect, useState } from "react";

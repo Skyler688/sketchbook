@@ -4,8 +4,8 @@ import styles from "./NotSavedPopUp.module.css";
 
 import { useState } from "react";
 
-import { saveDrawing, downloadDrawing } from "@/lib/drawing/api";
-import { storeDrawing, clearStorage } from "@/lib/drawing/storage";
+import { saveDrawing, downloadDrawing } from "@/lib/client/api";
+import { storeDrawing, clearStorage } from "@/lib/client/storage";
 
 export default function NotSavedPopUp({
     setNotSavedPopUp,
