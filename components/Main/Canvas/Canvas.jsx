@@ -6,29 +6,23 @@
 // or the "state_bridge" if shared with other components.
 
 import styles from "./Canvas.module.css";
+
 import { Rendering } from "@/lib/drawing/rendering/Rendering";
 import { storeLine } from "@/lib/drawing/storage";
+import { handleKeyUp, handleKeyDown } from "@/lib/drawing/events/key_map";
 // import { saveDrawing } from "../../../lib/drawing_requests";
 
 import { useRef, useEffect, useState } from "react";
 
 import { FiFile } from "react-icons/fi";
 
-export default function Canvas({
-    drawingRef,
-    // isSavedBridge,
-    namePopUp,
-    notSavedPopUp,
-    // downloadingBridge,
-}) {
+export default function Canvas({ drawingRef, namePopUp, notSavedPopUp }) {
     // ----------------------- State bridges ----------------------------
     const drawing = drawingRef.current;
     // const is_saved_bridge = isSavedBridge.current;
     // const downloading_bridge = downloadingBridge.current;
 
-    const [showCanvas, setShowCanvas] = useState(
-        drawing.drawing_bridge.get().name === "" ? false : true,
-    );
+    const [display, setDisplay] = useState("loading");
 
     const amountOfLines = useRef(0);
 
@@ -51,143 +45,78 @@ export default function Canvas({
         if (!rendering.current && localCanvasRef.current !== null) {
             rendering.current = new Rendering(drawing, localCanvasRef.current);
         }
-    }, [showCanvas]);
+    }, [display]);
 
-    // MOOVING TO INPUT ENGINE.
-    // Key events
-    // useEffect(() => {
-    //     if (showCanvas) {
-    //         const canvas = localCanvasRef.current;
+    useEffect(() => {
+        if (display === "canvas" && !notSavedPopUp && !namePopUp) {
+            function boundKeyDownHandler(event) {
+                handleKeyDown(event, drawing);
+            }
 
-    //         // const handleKeyDown = (event) => {
-    //         //     if (namePopUp) return;
+            function boundKeyUpHandler(event) {
+                handleKeyUp(event, drawing);
+            }
 
-    //         //     const key = event.key;
-    //         //     console.log("Key Down-> ", key);
+            const canvas = localCanvasRef.current;
+            let delta = 0;
+            function handleZoom(event) {
+                if (!drawing.camera_bridge.get().active) return;
 
-    //         //     if (key === "Shift") {
-    //         //         // If held activate move/zoom mode
-    //         //         drawing_bridge.mutate((data) => {
-    //         //             data.camera.active = true;
-    //         //         });
-    //         //     }
+                event.preventDefault(); // Disable normal page scrolling.
 
-    //         //     if (key === "-") {
-    //         //         drawing_bridge.mutate((data) => {
-    //         //             if (data.camera.scale * 0.9 > 0.1) {
-    //         //                 data.camera.scale *= 0.9;
-    //         //             } else {
-    //         //                 data.camera.scale = 0.1;
-    //         //             }
-    //         //         });
-    //         //     }
+                drawing.camera_bridge.mutate((camera) => {
+                    let scale = camera.scale;
 
-    //         //     if (key === "=" || key === "+") {
-    //         //         drawing_bridge.mutate((data) => {
-    //         //             if (data.camera.scale * 1.1 < 2.0) {
-    //         //                 data.camera.scale *= 1.1;
-    //         //             } else {
-    //         //                 data.camera.scale = 2.0;
-    //         //             }
-    //         //         });
-    //         //     }
-    //         // };
+                    const scroll_amount =
+                        Math.abs(event.deltaY) > Math.abs(event.deltaX)
+                            ? event.deltaY
+                            : event.deltaX;
 
-    //         // const handleKeyUp = async (event) => {
-    //         //     if (namePopUp) return;
+                    // If the direction of the scroll is changed reset the delta.
+                    if (
+                        (scroll_amount > 0 && delta < 0) ||
+                        (scroll_amount < 0 && delta > 0)
+                    ) {
+                        delta = 0;
+                    }
 
-    //         //     const key = event.key;
-    //         //     console.log("Key Up-> ", key);
+                    delta += scroll_amount;
 
-    //         //     if (key === "Shift") {
-    //         //         // Remove move/zoom mode
-    //         //         drawing_bridge.mutate((data) => {
-    //         //             data.camera.active = false;
-    //         //         });
-    //         //     }
+                    if (delta > 10) {
+                        scale *= 1.1;
+                        delta = 0;
+                    } else if (delta < -10) {
+                        scale *= 0.9;
+                        delta = 0;
+                    }
 
-    //         //     if (key === "s") {
-    //         //         if (await saveDrawing(drawing_bridge)) {
-    //         //             is_saved_bridge.mutate((data) => {
-    //         //                 data.status = true;
-    //         //             });
-    //         //         } else {
-    //         //             // TODO -> ADD WARNING THAT SAVE FAILED
-    //         //         }
-    //         //     }
-    //         // };
+                    if (scale < 0.1) {
+                        scale = 0.1;
+                    } else if (scale > 2.0) {
+                        scale = 2.0;
+                    }
 
-    //         let delta = 0;
-    //         function handleZoom(event) {
-    //             if (!moveMode.current) return; // If shift is held.
+                    camera.scale = scale;
+                });
+            }
 
-    //             event.preventDefault(); // Disable normal page scrolling.
+            window.addEventListener("keydown", boundKeyDownHandler);
+            window.addEventListener("keyup", boundKeyUpHandler);
+            canvas.addEventListener("wheel", handleZoom);
 
-    //             drawing_bridge.mutate((data) => {
-    //                 let scale = data.camera.scale;
+            return () => {
+                window.removeEventListener("keydown", boundKeyDownHandler);
+                window.removeEventListener("keyup", boundKeyUpHandler);
+                canvas.removeEventListener("wheel", handleZoom);
+            };
+        }
+    }, [display, notSavedPopUp, namePopUp]);
 
-    //                 const scroll_amount =
-    //                     Math.abs(event.deltaY) > Math.abs(event.deltaX)
-    //                         ? event.deltaY
-    //                         : event.deltaX;
-
-    //                 // If the direction of the scroll is changed reset the delta.
-    //                 if (
-    //                     (scroll_amount > 0 && delta < 0) ||
-    //                     (scroll_amount < 0 && delta > 0)
-    //                 ) {
-    //                     delta = 0;
-    //                 }
-
-    //                 delta += scroll_amount;
-
-    //                 if (delta > 10) {
-    //                     scale *= 1.1;
-    //                     delta = 0;
-    //                 } else if (delta < -10) {
-    //                     scale *= 0.9;
-    //                     delta = 0;
-    //                 }
-
-    //                 if (scale < 0.1) {
-    //                     scale = 0.1;
-    //                 } else if (scale > 2.0) {
-    //                     scale = 2.0;
-    //                 }
-
-    //                 data.camera.scale = scale;
-    //             });
-    //         }
-
-    //         // ---------------------- Events ----------------------
-    //         window.addEventListener("keydown", handleKeyDown);
-    //         window.addEventListener("keyup", handleKeyUp);
-    //         canvas.addEventListener("wheel", handleZoom, { passive: false });
-
-    //         return () => {
-    //             window.removeEventListener("keydown", handleKeyDown);
-    //             window.removeEventListener("keyup", handleKeyUp);
-    //             canvas.removeEventListener("wheel", handleZoom);
-    //         };
-    //     } else {
-    //         const downloaded_listener = downloading_bridge.listen((data) => {
-    //             if (!data.status) {
-    //                 setShowCanvas(true);
-    //             }
-    //         });
-
-    //         return () => {
-    //             downloaded_listener();
-    //         };
-    //     }
-    // }, [showCanvas, namePopUp, notSavedPopUp]); // To disable the key events during a pop up, otherwise the key presses will remain active.
-
-    // Main component useEffect.
     useEffect(() => {
         let resize_debounce;
         let camera_save_debounce;
 
-        if (showCanvas && rendering.current !== null) {
+        if (display === "canvas" && rendering.current !== null) {
             // Initial load, size, and render.
             rendering.current.resizeCanvas();
             rendering.current.rerender();
@@ -278,53 +207,44 @@ export default function Canvas({
             );
 
             // CHANGE -> MAKE THE CAMERA RERENDER TRIGGERS TIME BASED INSTEAD OF DISTANCE.
-            const camera_listener = drawing.camera_bridge.listen(
-                (camera_bridge) => {
-                    if (camera_bridge.active) {
-                        moveMode.current = true;
-                    } else {
-                        moveMode.current = false;
-                    }
+            const camera_listener = drawing.camera_bridge.listen((camera) => {
+                moveMode.current = camera.active;
 
-                    const currentPos = mousePosition.current;
+                const currentPos = mousePosition.current;
 
-                    // Only redrawing the canvas if moved over 20px to avoid lag, if moving the mouse fast there is still a bit of lag but may be unavoidable with cpu rendering.
-                    if (
-                        rendering.current.distance(last_mouse_pos, currentPos) >
-                            20 ||
-                        last_scale !== camera_bridge.scale ||
-                        !initial_redraw
-                    ) {
-                        rendering.current.rerender();
+                // Only redrawing the canvas if moved over 20px to avoid lag, if moving the mouse fast there is still a bit of lag but may be unavoidable with cpu rendering.
+                if (
+                    rendering.current.distance(last_mouse_pos, currentPos) >
+                        20 ||
+                    last_scale !== camera.scale ||
+                    !initial_redraw
+                ) {
+                    rendering.current.rerender();
 
-                        last_mouse_pos = currentPos;
-                        last_scale = camera_bridge.scale;
-                        initial_redraw = true;
-                    }
+                    last_mouse_pos = currentPos;
+                    last_scale = camera.scale;
+                    initial_redraw = true;
+                }
 
-                    clearTimeout(camera_save_debounce);
+                clearTimeout(camera_save_debounce);
 
-                    if (
-                        // If any of the cameras state has changed and is stable for 300 milliseconds
-                        last_camera_pos.x === camera_bridge.x ||
-                        last_camera_pos.y === camera_bridge.y ||
-                        last_camera_pos.scale === camera_bridge.scale
-                    ) {
-                        camera_save_debounce = setTimeout(() => {
-                            console.log("saving camera");
+                if (
+                    // If any of the cameras state has changed and is stable for 300 milliseconds
+                    last_camera_pos.x === camera.x ||
+                    last_camera_pos.y === camera.y ||
+                    last_camera_pos.scale === camera.scale
+                ) {
+                    camera_save_debounce = setTimeout(() => {
+                        console.log("saving camera");
 
-                            localStorage.setItem(
-                                "camera",
-                                JSON.stringify(camera_bridge),
-                            );
-                        }, 300);
-                    }
+                        localStorage.setItem("camera", JSON.stringify(camera));
+                    }, 300);
+                }
 
-                    last_camera_pos.x = camera_bridge.x;
-                    last_camera_pos.y = camera_bridge.y;
-                    last_camera_pos.scale = camera_bridge.scale;
-                },
-            );
+                last_camera_pos.x = camera.x;
+                last_camera_pos.y = camera.y;
+                last_camera_pos.scale = camera.scale;
+            });
 
             // Cleaning up the events, (preventing multiple copies every time the component is rerendered)
             return () => {
@@ -337,7 +257,11 @@ export default function Canvas({
             const downloaded_listener = drawing.network_status_bridge.listen(
                 (network_status) => {
                     if (!network_status.downloading) {
-                        setShowCanvas(true);
+                        if (drawing.drawing_bridge.get().name === "") {
+                            setDisplay("no_drawing");
+                        } else {
+                            setDisplay("canvas");
+                        }
                     }
                 },
             );
@@ -346,7 +270,7 @@ export default function Canvas({
                 downloaded_listener();
             };
         }
-    }, [showCanvas]);
+    }, [display]);
 
     function startDrawing(event) {
         if (event.button !== 0) {
@@ -379,9 +303,28 @@ export default function Canvas({
         rendering.current.drawLastPoint(event);
     }
 
-    return (
-        <div>
-            {showCanvas ? (
+    if (display === "loading") {
+        return (
+            <div className={styles.noDrawing}>
+                <h2>Loading...</h2>
+            </div>
+        );
+    } else if (display === "no_drawing") {
+        return (
+            <div className={styles.noDrawing}>
+                <h1>No drawing selected, please select a rendering.</h1>
+                <p className={styles.hint}>
+                    Drawings can be found/added in the{" "}
+                    <span>
+                        <FiFile />
+                    </span>{" "}
+                    menu.{" "}
+                </p>
+            </div>
+        );
+    } else if (display === "canvas") {
+        return (
+            <div>
                 <canvas
                     ref={localCanvasRef}
                     className={styles.canvas}
@@ -415,22 +358,16 @@ export default function Canvas({
 
                             // Mutate the cameras position.
                             if (lastMovePos.current.is_captured) {
-                                drawing.camera_bridge.mutate(
-                                    (camera_bridge) => {
-                                        const dx =
-                                            offset.x - lastMovePos.current.x;
-                                        const dy =
-                                            offset.y - lastMovePos.current.y;
+                                drawing.camera_bridge.mutate((camera) => {
+                                    const dx = offset.x - lastMovePos.current.x;
+                                    const dy = offset.y - lastMovePos.current.y;
 
-                                        camera_bridge.camera.x +=
-                                            dx / camera_bridge.camera.scale;
-                                        camera_bridge.camera.y +=
-                                            dy / camera_bridge.camera.scale;
+                                    camera.x += dx / camera.scale;
+                                    camera.y += dy / camera.scale;
 
-                                        lastMovePos.current.x = offset.x;
-                                        lastMovePos.current.y = offset.y;
-                                    },
-                                );
+                                    lastMovePos.current.x = offset.x;
+                                    lastMovePos.current.y = offset.y;
+                                });
                             } else {
                                 lastMovePos.current.x = offset.x;
                                 lastMovePos.current.y = offset.y;
@@ -455,18 +392,7 @@ export default function Canvas({
                         lastMovePos.current.is_captured = false;
                     }}
                 />
-            ) : (
-                <div className={styles.noDrawing}>
-                    <h1>No drawing selected, please select a rendering.</h1>
-                    <p className={styles.hint}>
-                        Drawings can be found/added in the{" "}
-                        <span>
-                            <FiFile />
-                        </span>{" "}
-                        menu.{" "}
-                    </p>
-                </div>
-            )}
-        </div>
-    );
+            </div>
+        );
+    }
 }

@@ -1,9 +1,8 @@
 "use client";
 
-import { fetchDrawingList, downloadDrawing } from "@/lib/drawing_requests";
+import { fetchDrawingList, downloadDrawing } from "@/lib/drawing/api";
 
-// import { rerender } from "@/lib/drawing/rendering";
-import { loadDrawing, storeDrawing, clearStorage } from "@/lib/drawing/storage";
+import { storeDrawing, clearStorage } from "@/lib/drawing/storage";
 
 import { IoAddCircleOutline } from "react-icons/io5";
 
@@ -40,6 +39,7 @@ export default function FileSubmenu({
             network_status.downloading = true;
         });
 
+        h;
         const og_line_count = drawing.drawing_bridge.get().lines.length;
 
         const result = await downloadDrawing(drawing, drawing_name);
