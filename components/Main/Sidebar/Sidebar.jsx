@@ -19,6 +19,8 @@ export default function Sidebar({
     namePopUp,
     setNamePopUp,
     setDrawingName,
+    deleteDrawingPopUp,
+    setDeleteDrawingPopUp,
 }) {
     const router = useRouter();
 
@@ -165,13 +167,12 @@ export default function Sidebar({
                 {subMenu === "files" && (
                     <FileSubmenu
                         drawingRef={drawingRef}
-                        // isSavedBridge={isSavedBridge}
                         setNotSavedPopUp={setNotSavedPopUp}
                         namePopUp={namePopUp}
                         setNamePopUp={setNamePopUp}
                         setDrawingName={setDrawingName}
-                        // setIsNew={setIsNew}
-                        // downloadingBridge={downloadingBridge}
+                        deleteDrawingPopUp={deleteDrawingPopUp}
+                        setDeleteDrawingPopUp={setDeleteDrawingPopUp}
                     />
                 )}
 

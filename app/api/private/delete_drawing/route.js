@@ -16,7 +16,7 @@ export async function DELETE(req) {
             databaseId: database_id,
             tableId: "drawings",
             queries: [
-                Query.equal("user_id", user_id),
+                Query.equal("user", user_id),
                 Query.equal("drawing_name", drawing_name),
             ],
         });

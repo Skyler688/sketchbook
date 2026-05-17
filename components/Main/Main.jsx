@@ -46,6 +46,7 @@ export default function Main() {
     const [namePopUp, setNamePopUp] = useState(false);
     const [notSavedPopUp, setNotSavedPopUp] = useState(false);
     const [drawingName, setDrawingName] = useState(""); // used only for passing the drawing name to download in the not saved pop up.
+    const [deleteDrawingPopUp, setDeleteDrawingPopUp] = useState(false);
 
     useEffect(() => {
         const drawing = drawingRef.current;
@@ -87,13 +88,12 @@ export default function Main() {
             <div className={styles.sidebar}>
                 <Sidebar
                     drawingRef={drawingRef}
-                    // isSavedBridge={isSavedBridge}
                     setNotSavedPopUp={setNotSavedPopUp}
                     namePopUp={namePopUp}
                     setNamePopUp={setNamePopUp}
                     setDrawingName={setDrawingName}
-                    // setIsNew={setIsNew}
-                    // downloadingBridge={downloadingBridge}
+                    deleteDrawingPopUp={deleteDrawingPopUp}
+                    setDeleteDrawingPopUp={setDeleteDrawingPopUp}
                 />
             </div>
         </div>

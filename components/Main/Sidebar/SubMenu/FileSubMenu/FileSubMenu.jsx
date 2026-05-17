@@ -2,7 +2,7 @@
 
 import { fetchDrawingList, downloadDrawing } from "@/lib/client/api";
 
-import { storeDrawing, clearStorage } from "@/lib/client/storage";
+import { storeDrawing, clearStorage, loadDrawing } from "@/lib/client/storage";
 
 import { IoAddCircleOutline } from "react-icons/io5";
 import { MdOutlineDelete } from "react-icons/md";
@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import styles from "./FileSubMenu.module.css";
 
 import DrawingNamePopUp from "./DrawingNamePopUp/DrawingNamePopUp";
+import DeleteDrawingPopUp from "./DeleteDrawingPopUp/DeleteDrawingPopUp";
 
 export default function FileSubmenu({
     drawingRef,
@@ -19,12 +20,15 @@ export default function FileSubmenu({
     namePopUp,
     setNamePopUp,
     setDrawingName,
+    deleteDrawingPopUp,
+    setDeleteDrawingPopUp,
 }) {
     const drawing = drawingRef.current;
 
     const [loading, setLoading] = useState(true);
     const [drawings, setDrawings] = useState([]);
     const [currentDrawing, setCurrentDrawing] = useState("");
+    const [targetDrawing, setTargetDrawing] = useState(null);
 
     async function getDrawing(drawing_name) {
         if (!drawing.network_status_bridge.get().is_saved) {
@@ -63,6 +67,8 @@ export default function FileSubmenu({
             network_status.is_saved = true;
             network_status.downloading = false;
         });
+
+        setCurrentDrawing(drawing_name);
     }
 
     function createNewDrawing() {
@@ -101,12 +107,21 @@ export default function FileSubmenu({
 
     return (
         <div className={styles.submenu}>
-            {namePopUp ? (
-                <DrawingNamePopUp
-                    drawingRef={drawingRef}
-                    setNamePopUp={setNamePopUp}
-                    setDrawings={setDrawings}
-                />
+            {namePopUp || deleteDrawingPopUp ? (
+                namePopUp ? (
+                    <DrawingNamePopUp
+                        drawingRef={drawingRef}
+                        setNamePopUp={setNamePopUp}
+                        setDrawings={setDrawings}
+                    />
+                ) : (
+                    <DeleteDrawingPopUp
+                        drawingRef={drawingRef}
+                        setDeleteDrawingPopUp={setDeleteDrawingPopUp}
+                        setDrawings={setDrawings}
+                        targetDrawing={targetDrawing}
+                    />
+                )
             ) : null}
 
             <h2 className={styles.title}>Drawings</h2>
@@ -131,7 +146,13 @@ export default function FileSubmenu({
                                 <FaRegEdit />
                             </button>
 
-                            <button className={styles.deleteFile}>
+                            <button
+                                className={styles.deleteFile}
+                                onClick={() => {
+                                    setTargetDrawing(drawing_name);
+                                    setDeleteDrawingPopUp(true);
+                                }}
+                            >
                                 <MdOutlineDelete />
                             </button>
                         </div>
