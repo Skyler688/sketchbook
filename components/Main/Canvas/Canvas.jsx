@@ -149,20 +149,18 @@ export default function Canvas({ drawingRef, namePopUp, notSavedPopUp }) {
             // If the download status is changed update the save conditions with the new drawings state.
             const download_listener = drawing.network_status_bridge.listen(
                 (network_status) => {
-                    if (!network_status.downloading) {
-                        const drawing_b = drawing.drawing_bridge.get();
-                        const camera_b = drawing.camera_bridge.get();
-
-                        amountOfLines.current = drawing_b.lines.length;
-                        last_drawing_name = drawing_b.name; // To track name changes.
-                        last_scale = camera_b.scale; // To track scale changes.
-                        last_mouse_pos = mousePosition.current; // To track mouse movement
-                        last_camera_pos.x = camera_b.x;
-                        last_camera_pos.y = camera_b.y;
-                        last_camera_pos.scale = camera_b.scale;
-
-                        rendering.current.rerender();
-                    }
+                    // if (!network_status.downloading) {
+                    //     const drawing_b = drawing.drawing_bridge.get();
+                    //     const camera_b = drawing.camera_bridge.get();
+                    //     amountOfLines.current = drawing_b.lines.length;
+                    //     last_drawing_name = drawing_b.name; // To track name changes.
+                    //     last_scale = camera_b.scale; // To track scale changes.
+                    //     last_mouse_pos = mousePosition.current; // To track mouse movement
+                    //     last_camera_pos.x = camera_b.x;
+                    //     last_camera_pos.y = camera_b.y;
+                    //     last_camera_pos.scale = camera_b.scale;
+                    //     rendering.current.rerender();
+                    // }
                 },
             );
 
@@ -183,6 +181,7 @@ export default function Canvas({ drawingRef, namePopUp, notSavedPopUp }) {
                         const lines_to_save =
                             drawing_bridge.lines.length - amountOfLines.current;
 
+                        console.log("lines", lines_to_save);
                         for (let i = 0; i < lines_to_save; i++) {
                             const line_index =
                                 i + drawing_bridge.lines.length - lines_to_save;

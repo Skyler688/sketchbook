@@ -27,56 +27,94 @@
 } */
 
 .title {
-  text-align: center;
-  margin-block: 10px;
-  color: #c6c6c6;
+    text-align: center;
+    margin-block: 10px;
+    color: #c6c6c6;
 }
 
 .loading {
-  color: #858585;
-  text-align: center;
-  font-size: 15px;
-  margin-top: 20px;
+    color: #858585;
+    text-align: center;
+    font-size: 15px;
+    margin-top: 20px;
 }
 
 .fileList {
-  flex: 1;
-  overflow-y: auto;
-  padding: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.fileRow {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 40px;
 }
 
 .fileItem {
-  padding: 8px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.15s ease;
-  background-color: #2a2a2a;
-  color: #ffffff;
+    padding: 8px 12px;
+    width: 100%;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    background-color: #2a2a2a;
+    color: #ffffff;
+}
+
+.editFile {
+    font-size: 20px;
+    padding: 3px;
+    margin-left: 15px;
+    border-radius: 6px;
+    background-color: #00000000;
+    border: none;
+    color: #c6c6c6;
+}
+
+.deleteFile {
+    font-size: 23px;
+    padding: 3px;
+    margin-left: 5px;
+    border-radius: 6px;
+    background-color: #00000000;
+    border: none;
+    color: #c6c6c6;
 }
 
 .add {
-  background-color: #313131;
-  border: none;
-  font-size: 25px;
-  color: #c6c6c6;
-  margin-top: 10px;
+    background-color: #313131;
+    border: none;
+    font-size: 25px;
+    color: #c6c6c6;
+    margin-top: 10px;
 }
 
 .fileItem:hover {
-  background-color: #333;
-  color: #fff;
+    background-color: #333;
+    color: #fff;
+}
+
+.editFile:hover {
+    color: #fff;
+    cursor: pointer;
+}
+
+.deleteFile:hover {
+    color: #fff;
+    cursor: pointer;
 }
 
 .fileItem:disabled {
-  background-color: #2a2a2a;
-  color: #858585;
-  cursor: default;
+    background-color: #2a2a2a;
+    color: #858585;
+    cursor: default;
 }
 
 .add:hover {
-  cursor: pointer;
-  color: #fff;
+    cursor: pointer;
+    color: #fff;
 }

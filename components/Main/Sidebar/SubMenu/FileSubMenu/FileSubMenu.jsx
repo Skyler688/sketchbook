@@ -5,6 +5,8 @@ import { fetchDrawingList, downloadDrawing } from "@/lib/client/api";
 import { storeDrawing, clearStorage } from "@/lib/client/storage";
 
 import { IoAddCircleOutline } from "react-icons/io5";
+import { MdOutlineDelete } from "react-icons/md";
+import { FaRegEdit } from "react-icons/fa";
 
 import { useEffect, useState } from "react";
 import styles from "./FileSubMenu.module.css";
@@ -114,16 +116,25 @@ export default function FileSubmenu({
             ) : (
                 <div className={styles.fileList}>
                     {drawings.map((drawing_name, index) => (
-                        <button
-                            key={index}
-                            className={styles.fileItem}
-                            onClick={() => {
-                                getDrawing(drawing_name);
-                            }}
-                            disabled={currentDrawing === drawing_name}
-                        >
-                            {drawing_name}
-                        </button>
+                        <div className={styles.fileRow} key={index}>
+                            <button
+                                className={styles.fileItem}
+                                onClick={() => {
+                                    getDrawing(drawing_name);
+                                }}
+                                disabled={currentDrawing === drawing_name}
+                            >
+                                {drawing_name}
+                            </button>
+
+                            <button className={styles.editFile}>
+                                <FaRegEdit />
+                            </button>
+
+                            <button className={styles.deleteFile}>
+                                <MdOutlineDelete />
+                            </button>
+                        </div>
                     ))}
 
                     <button className={styles.add} onClick={createNewDrawing}>
