@@ -53,11 +53,10 @@ export default function Main() {
 
         loadDrawing(drawing);
 
-        if (drawing.drawing_bridge.get().name !== "") {
-            drawing.network_status_bridge.mutate((network_status) => {
-                network_status.downloading = false;
-            });
-        }
+        // NOTE -> Only mutating the network_status_bridge to trigger the event listener in the Canvas element
+        // to display the loaded drawing or the no drawing selected content.
+        drawing.network_status_bridge.mutate((network_status) => {});
+
         return () => {};
     }, []);
 

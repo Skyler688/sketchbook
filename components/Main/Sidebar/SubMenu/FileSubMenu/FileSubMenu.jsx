@@ -57,9 +57,7 @@ export default function FileSubmenu({
             return;
         }
 
-        console.log(drawing.drawing_bridge.get().name);
         clearStorage(og_line_count);
-        console.log(drawing.drawing_bridge.get().name);
 
         storeDrawing(drawing);
 
@@ -67,8 +65,6 @@ export default function FileSubmenu({
             network_status.is_saved = true;
             network_status.downloading = false;
         });
-
-        setCurrentDrawing(drawing_name);
     }
 
     function createNewDrawing() {

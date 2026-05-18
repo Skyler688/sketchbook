@@ -136,9 +136,6 @@ export default function Canvas({ drawingRef, namePopUp, notSavedPopUp }) {
             // ************* For drawing_listener bellow *******************
             amountOfLines.current = drawing.drawing_bridge.get().lines.length;
             let last_drawing_name = drawing.drawing_bridge.get().name; // To track name changes.
-            let last_scale = drawing.camera_bridge.get().scale; // To track scale changes.
-            let last_mouse_pos = mousePosition.current; // To track mouse movement
-            let initial_redraw = false;
             const last_camera_pos = {
                 x: drawing.camera_bridge.get().x,
                 y: drawing.camera_bridge.get().y,
@@ -149,18 +146,19 @@ export default function Canvas({ drawingRef, namePopUp, notSavedPopUp }) {
             // If the download status is changed update the save conditions with the new drawings state.
             const download_listener = drawing.network_status_bridge.listen(
                 (network_status) => {
-                    // if (!network_status.downloading) {
-                    //     const drawing_b = drawing.drawing_bridge.get();
-                    //     const camera_b = drawing.camera_bridge.get();
-                    //     amountOfLines.current = drawing_b.lines.length;
-                    //     last_drawing_name = drawing_b.name; // To track name changes.
-                    //     last_scale = camera_b.scale; // To track scale changes.
-                    //     last_mouse_pos = mousePosition.current; // To track mouse movement
-                    //     last_camera_pos.x = camera_b.x;
-                    //     last_camera_pos.y = camera_b.y;
-                    //     last_camera_pos.scale = camera_b.scale;
-                    //     rendering.current.rerender();
-                    // }
+                    if (
+                        !network_status.downloading &&
+                        network_status.is_saved
+                    ) {
+                        const drawing_b = drawing.drawing_bridge.get();
+                        const camera_b = drawing.camera_bridge.get();
+                        amountOfLines.current = drawing_b.lines.length;
+                        last_drawing_name = drawing_b.name; // To track name changes.
+                        last_camera_pos.x = camera_b.x;
+                        last_camera_pos.y = camera_b.y;
+                        last_camera_pos.scale = camera_b.scale;
+                        rendering.current.rerender();
+                    }
                 },
             );
 
@@ -205,39 +203,38 @@ export default function Canvas({ drawingRef, namePopUp, notSavedPopUp }) {
                 },
             );
 
-            // CHANGE -> MAKE THE CAMERA RERENDER TRIGGERS TIME BASED INSTEAD OF DISTANCE.
+            let camera_rerender_frequency = null;
             const camera_listener = drawing.camera_bridge.listen((camera) => {
                 moveMode.current = camera.active;
 
-                const currentPos = mousePosition.current;
-
-                // Only redrawing the canvas if moved over 20px to avoid lag, if moving the mouse fast there is still a bit of lag but may be unavoidable with cpu rendering.
                 if (
-                    rendering.current.distance(last_mouse_pos, currentPos) >
-                        20 ||
-                    last_scale !== camera.scale ||
-                    !initial_redraw
+                    last_camera_pos.x !== camera.x ||
+                    last_camera_pos.y !== camera.y ||
+                    last_camera_pos.scale !== camera.scale
                 ) {
-                    rendering.current.rerender();
-
-                    last_mouse_pos = currentPos;
-                    last_scale = camera.scale;
-                    initial_redraw = true;
+                    if (camera_rerender_frequency === null) {
+                        console.log("Rerender started");
+                        camera_rerender_frequency = setInterval(() => {
+                            rendering.current.rerender();
+                        }, 17);
+                    }
                 }
 
                 clearTimeout(camera_save_debounce);
 
                 if (
-                    // If any of the cameras state has changed and is stable for 300 milliseconds
-                    last_camera_pos.x === camera.x ||
-                    last_camera_pos.y === camera.y ||
+                    last_camera_pos.x === camera.x &&
+                    last_camera_pos.y === camera.y &&
                     last_camera_pos.scale === camera.scale
                 ) {
                     camera_save_debounce = setTimeout(() => {
+                        clearInterval(camera_rerender_frequency);
+                        camera_rerender_frequency = null;
+
                         console.log("saving camera");
 
                         localStorage.setItem("camera", JSON.stringify(camera));
-                    }, 300);
+                    }, 17);
                 }
 
                 last_camera_pos.x = camera.x;
@@ -280,6 +277,7 @@ export default function Canvas({ drawingRef, namePopUp, notSavedPopUp }) {
         }
 
         if (!rendering.current) return;
+        console.log("start");
 
         is_drawing.current = true;
 
@@ -291,6 +289,8 @@ export default function Canvas({ drawingRef, namePopUp, notSavedPopUp }) {
 
         if (!rendering.current) return;
 
+        console.log("draw");
+
         rendering.current.drawLine(event);
     }
 
@@ -298,6 +298,8 @@ export default function Canvas({ drawingRef, namePopUp, notSavedPopUp }) {
         is_drawing.current = false;
 
         if (!rendering.current) return;
+
+        console.log("end");
 
         rendering.current.drawLastPoint(event);
     }

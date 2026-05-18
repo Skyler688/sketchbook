@@ -12,7 +12,7 @@ import { TbLogout2 } from "react-icons/tb";
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
-import { resetDrawing } from "@/lib/client/storage";
+import { clearStorage } from "@/lib/client/storage";
 export default function Sidebar({
     drawingRef,
     setNotSavedPopUp,
@@ -92,9 +92,8 @@ export default function Sidebar({
             return;
         }
 
-        // Wiping local storage back to default. (To prevent bug if switching to different account on same browser)
-        resetDrawing(drawingRef.current);
-
+        const line_count = drawingRef.current.drawing_bridge.get().lines.length;
+        clearStorage(line_count);
         router.push("/pages/login");
     }
 

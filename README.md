@@ -17,7 +17,7 @@ The overall architecture of this project is a nextjs server that also servers as
 
 ### Core Features
 
-- Implement a way to delete drawings.
+- (DONE) Implement a way to delete drawings.
 - Implement the redo stack, and the undo redo feature.
 - Update the header to display more than just the drawing name, and add the saved status, and camera position and zoom.
 - Create a user account menu with options to change password, and delete account.
@@ -32,4 +32,4 @@ The overall architecture of this project is a nextjs server that also servers as
 
 ### BUGS
 
-- After moving the camera and drawing a new line the drawing can shift a bit. This is caused by the distance based rerendering filter, instead replace this with a time based rerender. This will also make the movement more smooth.
+- (DONE) After moving the camera and drawing a new line the drawing can shift a bit. This is caused by the distance based rerendering filter, instead replace this with a time based rerender. This will also make the movement more smooth.

@@ -1,12 +1,29 @@
 .header {
-  width: 100vw;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    width: 100vw;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .drawingName {
-  font-size: 20px;
-  color: rgb(214, 214, 214);
+    font-size: 20px;
+    color: rgb(214, 214, 214);
+    margin-left: 40px;
+}
+
+.camera {
+    display: flex;
+    margin-right: 40px;
+}
+
+.position {
+    display: flex;
+    justify-content: space-around;
+    margin-inline: 30px;
+}
+
+.position p {
+    font-size: 15px;
+    margin-inline: 15px;
 }
