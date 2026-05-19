@@ -12,6 +12,8 @@ export default function DeleteDrawingPopUp({
     setDrawings,
     targetDrawing,
 }) {
+    const drawing = drawingRef.current;
+
     const [warning, setWarning] = useState(false);
 
     async function removeDrawing() {
@@ -21,7 +23,11 @@ export default function DeleteDrawingPopUp({
             setWarning(true);
         }
 
-        resetDrawing(drawingRef.current);
+        if (drawing.drawing_bridge.get().name === targetDrawing) {
+            resetDrawing(drawing);
+
+            // trigger the canvas to display the no drawing selected.
+        }
 
         setDrawings((prev) =>
             prev.filter((drawing) => drawing !== targetDrawing),

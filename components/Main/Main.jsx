@@ -23,7 +23,7 @@ export default function Main() {
         drawing_bridge: createBridge({
             lines: [],
             redo_stack: [],
-            old_line_count: 0, // Used to clear the old lines from local storage when loading in a new drawing.
+            old_line_count: 0, // NOT USED?
             name: "",
         }),
         camera_bridge: createBridge({
@@ -42,7 +42,6 @@ export default function Main() {
         }),
     });
 
-    // const [isNew, setIsNew] = useState(false);
     const [namePopUp, setNamePopUp] = useState(false);
     const [notSavedPopUp, setNotSavedPopUp] = useState(false);
     const [drawingName, setDrawingName] = useState(""); // used only for passing the drawing name to download in the not saved pop up.

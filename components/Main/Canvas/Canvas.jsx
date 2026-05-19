@@ -166,6 +166,11 @@ export default function Canvas({ drawingRef, namePopUp, notSavedPopUp }) {
                 (drawing_bridge) => {
                     if (drawing.network_status_bridge.get().downloading) return;
 
+                    if (drawing_bridge.name === "") {
+                        rendering.current = null;
+                        localCanvasRef.current = null;
+                        setDisplay("no_drawing");
+                    }
                     // Save each new line to local storage as soon as it is created.
                     if (amountOfLines.current < drawing_bridge.lines.length) {
                         console.log("Saving new line...");
@@ -205,7 +210,11 @@ export default function Canvas({ drawingRef, namePopUp, notSavedPopUp }) {
 
             let camera_rerender_frequency = null;
             const camera_listener = drawing.camera_bridge.listen((camera) => {
-                if (drawing.network_status_bridge.get().downloading) return; // to prevent the rerender loop from triggering when downloading a new drawing.
+                if (
+                    drawing.network_status_bridge.get().downloading ||
+                    drawing.drawing_bridge.get().name === ""
+                )
+                    return; // to prevent the rerender loop from triggering when downloading a new drawing, or if a drawing is deleted.
 
                 moveMode.current = camera.active;
 
@@ -315,9 +324,9 @@ export default function Canvas({ drawingRef, namePopUp, notSavedPopUp }) {
     } else if (display === "no_drawing") {
         return (
             <div className={styles.noDrawing}>
-                <h1>No drawing selected, please select a rendering.</h1>
+                <h1>No drawing selected, please select a drawing.</h1>
                 <p className={styles.hint}>
-                    Drawings can be found/added in the{" "}
+                    Drawings can be found/created in the{" "}
                     <span>
                         <FiFile />
                     </span>{" "}

@@ -5,7 +5,7 @@ import styles from "./DrawingNamePopUp.module.css";
 import { useState } from "react";
 
 import { createDrawing } from "@/lib/client/api";
-import { resetDrawing } from "@/lib/client/storage";
+import { resetDrawing, storeDrawing } from "@/lib/client/storage";
 
 export default function DrawingNamePopUp({
     drawingRef,
@@ -45,6 +45,8 @@ export default function DrawingNamePopUp({
 
             return;
         }
+
+        storeDrawing(drawing);
 
         drawing.network_status_bridge.mutate((network_status) => {
             network_status.is_saved = true;

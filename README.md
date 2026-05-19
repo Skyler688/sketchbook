@@ -28,7 +28,7 @@ The overall architecture of this project is a nextjs server that also servers as
 - Rendering grid, used to optimize rendering by only rendering the lines that are visible.
 - Forgot password email recovery.
 - Create shapes and strait lines with snapping/free mode.
-- Experiment with toggle based key events. (like vim)
+- Experiment with toggle based key modes/events. (like vim)
 - Persist the UI state with local storage to prevent changes on refresh.
 
 ### BUGS

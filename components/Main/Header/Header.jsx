@@ -21,6 +21,8 @@ export default function Header({ drawingRef }) {
                     drawing_bridge.name !== ""
                 ) {
                     setDrawingName(drawing_bridge.name);
+                } else if (drawing_bridge.name === "") {
+                    setDrawingName("No Drawing Selected");
                 }
             },
         );
