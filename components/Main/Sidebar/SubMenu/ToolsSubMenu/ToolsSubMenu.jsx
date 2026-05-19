@@ -19,13 +19,6 @@ export default function ToolsSubmenu({ drawingRef }) {
 
         const settings_listener = drawing.line_settings_bridge.listen(
             (line_settings) => {
-                if (
-                    old_line_settings.width === line_settings.width &&
-                    old_line_settings.color === line_settings.color
-                ) {
-                    return;
-                }
-
                 clearTimeout(debounce_timer);
 
                 debounce_timer = setTimeout(() => {
@@ -35,8 +28,9 @@ export default function ToolsSubmenu({ drawingRef }) {
                         JSON.stringify(line_settings),
                     );
 
-                    old_line_settings = line_settings;
-                }, 300);
+                    old_line_settings.width = line_settings.width;
+                    old_line_settings.color = line_settings.color;
+                }, 100);
             },
         );
 

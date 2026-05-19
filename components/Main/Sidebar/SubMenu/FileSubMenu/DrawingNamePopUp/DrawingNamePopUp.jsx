@@ -20,11 +20,11 @@ export default function DrawingNamePopUp({
     async function save() {
         const og_name = drawing.drawing_bridge.get().name;
 
-        resetDrawing(drawing);
-
         drawing.network_status_bridge.mutate((network_status) => {
             network_status.downloading = true;
         });
+
+        resetDrawing(drawing);
 
         drawing.drawing_bridge.mutate((drawing_bridge) => {
             drawing_bridge.name = drawingName;

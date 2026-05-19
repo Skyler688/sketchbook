@@ -8,7 +8,7 @@ import { TbZoom } from "react-icons/tb";
 export default function Header({ drawingRef }) {
     const drawing = drawingRef.current;
 
-    const [drawingName, setDrawingName] = useState("Untitled");
+    const [drawingName, setDrawingName] = useState("No Drawing Selected");
     const [zoom, setZoom] = useState(0);
     const [xPos, setXPos] = useState(0);
     const [yPos, setYPos] = useState(0);

@@ -53,6 +53,7 @@ export default function Main() {
 
         loadDrawing(drawing);
 
+        console.log(drawing.camera_bridge.get());
         // NOTE -> Only mutating the network_status_bridge to trigger the event listener in the Canvas element
         // to display the loaded drawing or the no drawing selected content.
         drawing.network_status_bridge.mutate((network_status) => {});
@@ -77,10 +78,8 @@ export default function Main() {
             <div className={styles.workArea}>
                 <Canvas
                     drawingRef={drawingRef}
-                    // isSavedBridge={isSavedBridge}
                     namePopUp={namePopUp}
                     notSavedPopUp={notSavedPopUp}
-                    // downloadingBridge={downloadingBridge}
                 />
             </div>
 

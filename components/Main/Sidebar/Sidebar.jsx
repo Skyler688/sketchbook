@@ -94,7 +94,7 @@ export default function Sidebar({
 
         const line_count = drawingRef.current.drawing_bridge.get().lines.length;
         clearStorage(line_count);
-        router.push("/pages/login");
+        router.push("/login");
     }
 
     return (

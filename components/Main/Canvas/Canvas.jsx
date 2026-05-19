@@ -205,6 +205,8 @@ export default function Canvas({ drawingRef, namePopUp, notSavedPopUp }) {
 
             let camera_rerender_frequency = null;
             const camera_listener = drawing.camera_bridge.listen((camera) => {
+                if (drawing.network_status_bridge.get().downloading) return; // to prevent the rerender loop from triggering when downloading a new drawing.
+
                 moveMode.current = camera.active;
 
                 if (
@@ -231,7 +233,7 @@ export default function Canvas({ drawingRef, namePopUp, notSavedPopUp }) {
                         clearInterval(camera_rerender_frequency);
                         camera_rerender_frequency = null;
 
-                        console.log("saving camera");
+                        console.log("saving camera", camera);
 
                         localStorage.setItem("camera", JSON.stringify(camera));
                     }, 17);

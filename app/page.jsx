@@ -13,13 +13,13 @@ export default async function Home() {
     const cookie = cookie_store.get("session")?.value;
 
     if (!cookie) {
-        redirect("/pages/login");
+        redirect("/login");
     }
 
     const token = validateToken(cookie);
 
     if (!token) {
-        redirect("/pages/login");
+        redirect("/login");
     }
 
     return <Main />;
