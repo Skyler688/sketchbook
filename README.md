@@ -30,9 +30,10 @@ The overall architecture of this project is a nextjs server that also servers as
 - Create shapes and strait lines with snapping/free mode.
 - Experiment with toggle based key modes/events. (like vim)
 - Persist the UI state with local storage to prevent changes on refresh.
+- Make a left click menu for things like per line editing.
 
 ### BUGS
 
 - (DONE) After moving the camera and drawing a new line the drawing can shift a bit. This is caused by the distance based rerendering filter, instead replace this with a time based rerender. This will also make the movement more smooth.
-- When deleting all drawings the last drawing downloaded will still be displayed.
-- Add a line settings listener to save to local storage, will revert back to last state on refresh.
+- (DONE) When deleting all drawings the last drawing downloaded will still be displayed.
+- (DONE) Add a line settings listener to save to local storage, will revert back to last state on refresh.
